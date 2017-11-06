@@ -5,8 +5,6 @@ namespace Tests\Unit;
 use App\Gift;
 use Carbon\Carbon;
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 class GiftTest extends TestCase
@@ -77,7 +75,7 @@ class GiftTest extends TestCase
     public function testGetValueReturnsValue()
     {
         $gift = new Gift;
-        $gift->value_in_dollars = '220.00';
+        $gift->value = '220.00';
 
         $this->assertEquals(
             '220.00',

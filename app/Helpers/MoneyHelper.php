@@ -28,7 +28,13 @@ class MoneyHelper
         }
 
         if ($currency) {
-            $amount = $currency->symbol . $amount;
+            switch ($currency->iso) {
+                case 'BRL':
+                    $amount = number_format($amount, 2, ',', '.');
+                    break;
+            }
+
+            $amount = $currency->symbol.$amount;
         }
 
         return (string) $amount;

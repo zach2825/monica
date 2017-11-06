@@ -2,7 +2,6 @@
 
 namespace App;
 
-use App\ActivityTypeGroup;
 use Illuminate\Database\Eloquent\Model;
 
 class ActivityType extends Model
@@ -14,7 +13,7 @@ class ActivityType extends Model
      */
     public function group()
     {
-        return $this->belongsTo('App\ActivityTypeGroup');
+        return $this->belongsTo('App\ActivityTypeGroup', 'activity_type_group_id');
     }
 
     public function getTranslationKeyAsString()

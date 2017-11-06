@@ -2,20 +2,84 @@
 
 namespace App;
 
-use Auth;
 use Carbon\Carbon;
+use App\Traits\Searchable;
 use App\Helpers\DateHelper;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Builder;
+use App\Http\Resources\Tag\Tag as TagResource;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Http\Resources\Contact\PartnerShort as PartnerShortResource;
+use App\Http\Resources\Contact\OffspringShort as OffspringShortResource;
+use App\Http\Resources\Contact\ProgenitorShort as ProgenitorShortResource;
 
 class Contact extends Model
 {
+    use Searchable;
+
     protected $dates = [
         'birthdate',
+        'last_talked_to',
+        'first_met',
+    ];
+
+    // The list of columns we want the Searchable trait to use.
+    protected $searchable_columns = [
+        'first_name',
+        'middle_name',
+        'last_name',
+        'email',
+        'street',
+        'city',
+        'postal_code',
+        'province',
+        'food_preferencies',
+        'job',
+        'company',
+    ];
+
+    // The list of columns we want the Searchable trait to select.
+    protected $return_from_search = [
+        'id',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'has_avatar',
+        'avatar_file_name',
+        'gravatar_url',
+        'default_avatar_color',
+    ];
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'first_name',
+        'middle_name',
+        'last_name',
+        'gender',
+        'birthdate',
+        'is_birthdate_approximate',
+        'account_id',
+        'is_partial',
+        'phone_number',
+        'email',
+        'job',
+        'company',
+        'street',
+        'city',
+        'province',
+        'postal_code',
+        'country_id',
+        'food_preferencies',
+        'facebook_profile_url',
+        'twitter_profile_url',
+        'linkedin_profile_url',
     ];
 
     /**
@@ -30,6 +94,15 @@ class Contact extends Model
      */
     protected $with = [
         'account',
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_partial' => 'boolean',
     ];
 
     /**
@@ -49,7 +122,7 @@ class Contact extends Model
      */
     public function activities()
     {
-        return $this->hasMany('App\Activity')->orderBy('date_it_happened', 'desc');
+        return $this->belongsToMany('App\Activity')->orderBy('date_it_happened', 'desc');
     }
 
     /**
@@ -103,16 +176,6 @@ class Contact extends Model
     }
 
     /**
-     * Get the kid records associated with the contact.
-     *
-     * @return HasMany
-     */
-    public function kids()
-    {
-        return $this->hasMany('App\Kid', 'child_of_contact_id');
-    }
-
-    /**
      * Get the note records associated with the contact.
      *
      * @return HasMany
@@ -133,26 +196,6 @@ class Contact extends Model
     }
 
     /**
-     * Get the current significant other associated with the contact.
-     *
-     * @return SignificantOther
-     */
-    public function significantOther()
-    {
-        return $this->hasOne('App\SignificantOther')->active();
-    }
-
-    /**
-     * Get the significant others associated with the contact.
-     *
-     * @return HasMany
-     */
-    public function significantOthers()
-    {
-        return $this->hasMany('App\SignificantOther');
-    }
-
-    /**
      * Get the task records associated with the contact.
      *
      * @return HasMany
@@ -163,7 +206,67 @@ class Contact extends Model
     }
 
     /**
-     * Sort the contacts according a given criteria
+     * Get the tags records associated with the contact.
+     *
+     * @return HasMany
+     */
+    public function tags()
+    {
+        return $this->belongsToMany('App\Tag')->withPivot('account_id')->withTimestamps();
+    }
+
+    /**
+     * Get the calls records associated with the contact.
+     *
+     * @return HasMany
+     */
+    public function calls()
+    {
+        return $this->hasMany('App\Call')->orderBy('called_at', 'desc');
+    }
+
+    /**
+     * Get the entries records associated with the contact.
+     *
+     * @return HasMany
+     */
+    public function entries()
+    {
+        return $this->hasMany('App\Entry');
+    }
+
+    /**
+     * Get the Relationships records associated with the contact.
+     *
+     * @return HasMany
+     */
+    public function activeRelationships()
+    {
+        return $this->hasMany('App\Relationship', 'contact_id')->where('is_active', 1);
+    }
+
+    /**
+     * Get the Offsprings records associated with the contact.
+     *
+     * @return HasMany
+     */
+    public function offsprings()
+    {
+        return $this->hasMany('App\Offspring', 'is_the_child_of');
+    }
+
+    /**
+     * Get the Progenitors records associated with the contact.
+     *
+     * @return HasMany
+     */
+    public function progenitors()
+    {
+        return $this->hasMany('App\Progenitor', 'is_the_parent_of');
+    }
+
+    /**
+     * Sort the contacts according a given criteria.
      * @param Builder $builder
      * @param string $criteria
      * @return Builder
@@ -182,11 +285,45 @@ class Contact extends Model
             default:
                 return $builder->orderBy('first_name', 'asc');
         }
-
     }
 
     /**
-     * Get user's initials
+     * Scope a query to only include contacts who are not only a kid or a
+     * significant other without being a contact.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeReal($query)
+    {
+        return $query->where('is_partial', 0);
+    }
+
+    /**
+     * Mutator first_name.
+     *
+     * @param string|null $value
+     */
+    public function setFirstNameAttribute($value)
+    {
+        $this->attributes['first_name'] = trim($value);
+    }
+
+    /**
+     * Mutator last_name.
+     *
+     * It doesn't run ucfirst on purpose.
+     *
+     * @param string|null $value
+     */
+    public function setLastNameAttribute($value)
+    {
+        $value = $value ? trim($value) : null;
+        $this->attributes['last_name'] = $value;
+    }
+
+    /**
+     * Get user's initials.
      *
      * @return string
      */
@@ -209,23 +346,23 @@ class Contact extends Model
         if ($nameOrder == 'firstname_first') {
             $completeName = $this->first_name;
 
-            if (!is_null($this->middle_name)) {
-                $completeName = $completeName . ' ' . $this->middle_name;
+            if (! is_null($this->middle_name)) {
+                $completeName = $completeName.' '.$this->middle_name;
             }
 
-            if (!is_null($this->last_name)) {
-                $completeName = $completeName . ' ' . $this->last_name;
+            if (! is_null($this->last_name)) {
+                $completeName = $completeName.' '.$this->last_name;
             }
         } else {
-            if (!is_null($this->last_name)) {
+            if (! is_null($this->last_name)) {
                 $completeName = $this->last_name;
             }
 
-            if (!is_null($this->middle_name)) {
-                $completeName = $completeName . ' ' . $this->middle_name;
+            if (! is_null($this->middle_name)) {
+                $completeName = $completeName.' '.$this->middle_name;
             }
 
-            $completeName = $completeName . ' ' . $this->first_name;
+            $completeName = $completeName.' '.$this->first_name;
         }
 
         return $completeName;
@@ -239,16 +376,6 @@ class Contact extends Model
     public function getFirstName()
     {
         return $this->first_name;
-    }
-
-    /**
-     * Get the middle name of the contact.
-     *
-     * @return string
-     */
-    public function getMiddleName()
-    {
-        return $this->middle_name;
     }
 
     /**
@@ -279,7 +406,7 @@ class Contact extends Model
     public function getLastActivityDate($timezone)
     {
         if ($this->activities->count() === 0) {
-            return null;
+            return;
         }
 
         $lastActivity = $this->activities->sortByDesc('date_it_happened')->first();
@@ -297,24 +424,12 @@ class Contact extends Model
     public function getLastCalled($timezone)
     {
         if (is_null($this->last_talked_to)) {
-            return null;
+            return;
         }
 
-        return DateHelper::createDateFromFormat($this->last_talked_to, $timezone)->diffForHumans();
-    }
-
-    /**
-     * Get the birthdate of the contact.
-     *
-     * @return Carbon
-     */
-    public function getBirthdate()
-    {
-        if (is_null($this->birthdate)) {
-            return null;
-        }
-
-        return $this->birthdate;
+        return DateHelper::getShortDate(
+            Carbon::parse($this->last_talked_to, $timezone)
+        );
     }
 
     /**
@@ -326,56 +441,14 @@ class Contact extends Model
     public function getAge()
     {
         if (is_null($this->birthdate)) {
-            return null;
+            return;
         }
 
         return $this->birthdate->diffInYears(Carbon::now());
     }
 
     /**
-     * Get the phone number as a string.
-     *
-     * @return string or null
-     */
-    public function getPhone()
-    {
-        if (is_null($this->phone_number)) {
-            return null;
-        }
-
-        return $this->phone_number;
-    }
-
-    /**
-     * Get the work information as a string.
-     *
-     * @return string or null
-     */
-    public function getJob()
-    {
-        if (is_null($this->job)) {
-            return null;
-        }
-
-        return $this->job;
-    }
-
-    /**
-     * Get the company the person is working at as a string.
-     *
-     * @return string or null
-     */
-    public function getCompany()
-    {
-        if (is_null($this->company)) {
-            return null;
-        }
-
-        return $this->company;
-    }
-
-    /**
-     * Returns 'true' if the birthdate is an approximation
+     * Returns 'true' if the birthdate is an approximation.
      *
      * @return string
      */
@@ -399,60 +472,22 @@ class Contact extends Model
      */
     public function getPartialAddress()
     {
-        $address = $this->getCity();
+        $address = $this->city;
 
         if (is_null($address)) {
-            return null;
+            return;
         }
 
-        if (!is_null($this->getProvince())) {
-            $address = $address . ', ' . $this->getProvince();
+        if (! is_null($this->province)) {
+            $address = $address.', '.$this->province;
         }
 
         return $address;
     }
 
     /**
-     * Get the street of the contact.
-     * @return string or null
-     */
-    public function getStreet()
-    {
-        if (is_null($this->street)) {
-            return null;
-        }
-
-        return $this->street;
-    }
-
-    /**
-     * Get the province of the contact.
-     * @return string or null
-     */
-    public function getProvince()
-    {
-        if (is_null($this->province)) {
-            return null;
-        }
-
-        return $this->province;
-    }
-
-    /**
-     * Get the postal code of the contact.
-     * @return string or null
-     */
-    public function getPostalCode()
-    {
-        if (is_null($this->postal_code)) {
-            return null;
-        }
-
-        return $this->postal_code;
-    }
-
-    /**
      * Get the country of the contact.
+     *
      * @return string or null
      */
     public function getCountryName()
@@ -460,34 +495,11 @@ class Contact extends Model
         if ($this->country) {
             return $this->country->country;
         }
-
-        return null;
-    }
-
-    /**
-     * Get the city.
-     * @return string
-     */
-    public function getCity()
-    {
-        if (is_null($this->city)) {
-            return null;
-        }
-
-        return $this->city;
-    }
-
-    /**
-     * Get the countryID of the contact.
-     * @return string or null
-     */
-    public function getCountryID()
-    {
-        return $this->country_id;
     }
 
     /**
      * Get the country ISO of the contact.
+     *
      * @return string or null
      */
     public function getCountryISO()
@@ -495,8 +507,6 @@ class Contact extends Model
         if ($this->country) {
             return $this->country->iso;
         }
-
-        return null;
     }
 
     /**
@@ -513,153 +523,99 @@ class Contact extends Model
     }
 
     /**
-     * Get the total number of reminders.
-     *
-     * @return int
-     */
-    public function getNumberOfReminders()
-    {
-        return $this->reminders->count();
-    }
-
-    /**
-     * Get the total number of kids.
-     *
-     * @return int
-     */
-    public function getNumberOfKids()
-    {
-        return $this->kids->count();
-    }
-
-    /**
-     * Get the total number of activities.
-     *
-     * @return int
-     */
-    public function getNumberOfActivities()
-    {
-        return $this->activities->count();
-    }
-
-    /**
-     * Get the total number of gifts, regardless of ideas or offered.
-     *
-     * @return int
-     */
-    public function getNumberOfGifts()
-    {
-        return $this->gifts->count();
-    }
-
-    /**
-     * Gets the email address or returns null if undefined.
-     *
-     * @return string
-     */
-    public function getEmail()
-    {
-        if (is_null($this->email)) {
-            return null;
-        }
-
-        return $this->email;
-    }
-
-    /**
-     * Gets the Twitter URL or returns null if undefined.
-     *
-     * @return string
-     */
-    public function getTwitter()
-    {
-        if (is_null($this->twitter_profile_url)) {
-            return null;
-        }
-
-        return $this->twitter_profile_url;
-    }
-
-    /**
-     * Gets the Facebook URL or returns null if undefined.
-     *
-     * @return string
-     */
-    public function getFacebook()
-    {
-        if (is_null($this->facebook_profile_url)) {
-            return null;
-        }
-
-        return $this->facebook_profile_url;
-    }
-
-    /**
-     * Gets the LinkedIn URL or returns null if undefined.
-     *
-     * @return string
-     */
-    public function getLinkedin()
-    {
-        if (is_null($this->linkedin_profile_url)) {
-            return null;
-        }
-
-        return $this->linkedin_profile_url;
-    }
-
-    /**
-     * Get the current Significant Other, if it exists, or return null otherwise.
-     *
-     * @return SignificantOther
-     */
-    public function getCurrentSignificantOther()
-    {
-        return $this->significantOther;
-    }
-
-    /**
-     * Get the notes for this contact. Return an empty collection if no notes.
-     *
-     * @return Note
-     */
-    public function getNotes()
-    {
-        return $this->notes;
-    }
-
-    /**
-     * Get the number of notes for this contact.
-     *
-     * @return int
-     */
-    public function getNumberOfNotes()
-    {
-        return $this->notes->count();
-    }
-
-    /**
-     * Get the kids, if any, as a collection.
+     * Get the current Significant Others, if they exists, or return null otherwise.
      *
      * @return Collection
      */
-    public function getKids()
+    public function getCurrentPartners()
     {
-        return $this->kids;
+        $partners = collect([]);
+        foreach ($this->activeRelationships as $relationship) {
+            $contact = self::find($relationship->with_contact_id);
+            $partners->push($contact);
+        }
+
+        return $partners;
     }
 
     /**
-     * Gets the food preferencies or return null if not defined.
+     * Get the current Significant Others as ID, if they exists, or return null otherwise.
      *
-     * @return string
+     * @return Collection
      */
-    public function getFoodPreferencies()
+    public function getCurrentPartnersForAPI()
     {
-        if (is_null($this->food_preferencies)) {
-            return null;
+        $partners = collect([]);
+        foreach ($this->activeRelationships as $relationship) {
+            $contact = self::find($relationship->with_contact_id);
+            $partners->push(new PartnerShortResource($contact));
         }
 
-        return $this->food_preferencies;
+        return $partners;
+    }
+
+    /**
+     * Get the Kids, if they exists, or return null otherwise.
+     *
+     * @return Collection
+     */
+    public function getOffsprings()
+    {
+        $kids = collect([]);
+        foreach ($this->offsprings as $offspring) {
+            $contact = self::find($offspring->contact_id);
+            $kids->push($contact);
+        }
+
+        return $kids;
+    }
+
+    /**
+     * Get the Kids, if they exists, or return null otherwise.
+     *
+     * @return Collection
+     */
+    public function getOffspringsForAPI()
+    {
+        $kids = collect([]);
+        foreach ($this->offsprings as $offspring) {
+            $contact = self::find($offspring->contact_id);
+            $kids->push(new OffspringShortResource($contact));
+        }
+
+        return $kids;
+    }
+
+    /**
+     * Get the current parents, if they exists, or return null otherwise.
+     *
+     * @return Collection
+     */
+    public function getProgenitors()
+    {
+        $progenitors = collect([]);
+        foreach ($this->progenitors as $progenitor) {
+            $contact = self::find($progenitor->contact_id);
+            $progenitors->push($contact);
+        }
+
+        return $progenitors;
+    }
+
+    /**
+     * Get the current parents, if they exists, or return null otherwise.
+     *
+     * @return Collection
+     */
+    public function getProgenitorsForAPI()
+    {
+        $progenitors = collect([]);
+        foreach ($this->progenitors as $progenitor) {
+            $contact = self::find($progenitor->contact_id);
+            $progenitors->push(new ProgenitorShortResource($contact));
+        }
+
+        return $progenitors;
     }
 
     /**
@@ -732,11 +688,11 @@ class Contact extends Model
 
         $this->first_name = $firstName;
 
-        if (!is_null($middleName)) {
+        if (! is_null($middleName)) {
             $this->middle_name = $middleName;
         }
 
-        if (!is_null($lastName)) {
+        if (! is_null($lastName)) {
             $this->last_name = $lastName;
         }
 
@@ -763,16 +719,6 @@ class Contact extends Model
     }
 
     /**
-     * Get all the activities, if any.
-     *
-     * @return Collection
-     */
-    public function getActivities()
-    {
-        return $this->activities;
-    }
-
-    /**
      * Refresh statistics about activities
      * TODO: unit test.
      *
@@ -789,38 +735,9 @@ class Contact extends Model
                 $activityStatistic = $this->activityStatistics()->create([]);
                 $activityStatistic->account_id = $this->account_id;
                 $activityStatistic->year = $year;
-                $activityStatistic->count = $activities->count();;
+                $activityStatistic->count = $activities->count();
                 $activityStatistic->save();
             });
-    }
-
-    /**
-     * Get statistics for the contact
-     * TODO: add unit test.
-     */
-    public function getActivitiesStats()
-    {
-        return $this->activityStatistics;
-    }
-
-    /**
-     * Get all the reminders, if any.
-     *
-     * @return Collection
-     */
-    public function getReminders()
-    {
-        return $this->reminders;
-    }
-
-    /**
-     * Get all the gifts, if any.
-     *
-     * @return Collection
-     */
-    public function getGifts()
-    {
-        return $this->gifts;
     }
 
     /**
@@ -848,14 +765,6 @@ class Contact extends Model
     }
 
     /**
-     * Get all the tasks no matter the state, if any.
-     */
-    public function getTasks()
-    {
-        return $this->tasks;
-    }
-
-    /**
      * Get all the tasks in the in completed state, if any.
      */
     public function getCompletedTasks()
@@ -864,38 +773,46 @@ class Contact extends Model
     }
 
     /**
-     * Returns the URL of the avatar with the given size
+     * Returns the URL of the avatar with the given size.
+     *
      * @param  int $size
      * @return string
      */
     public function getAvatarURL($size)
     {
-        $original_avatar_url = Storage::disk('public')->url($this->avatar_file_name);
+        $original_avatar_url = Storage::disk($this->avatar_location)->url($this->avatar_file_name);
         $avatar_filename = pathinfo($original_avatar_url, PATHINFO_FILENAME);
         $avatar_extension = pathinfo($original_avatar_url, PATHINFO_EXTENSION);
-        $resized_avatar = 'avatars/' . $avatar_filename . '_' . $size . '.' . $avatar_extension;
+        $resized_avatar = 'avatars/'.$avatar_filename.'_'.$size.'.'.$avatar_extension;
 
-        return Storage::disk('public')->url($resized_avatar);
+        return Storage::disk($this->avatar_location)->url($resized_avatar);
     }
 
+    /**
+     * Get the gravatar, if it exits.
+     *
+     * @param  int $size
+     * @return string|bool
+     */
     public function getGravatar($size)
     {
         if (empty($this->email)) {
             return false;
         }
-        $gravatar_url = "https://www.gravatar.com/avatar/" . md5(strtolower(trim($this->email)));
+        $gravatar_url = 'https://www.gravatar.com/avatar/'.md5(strtolower(trim($this->email)));
         // check if gravatar exists by appending ?d=404, returns 404 response if does not exist
-        $gravatarHeaders = get_headers($gravatar_url . "?d=404");
-        if ($gravatarHeaders[0] == "HTTP/1.1 404 Not Found") {
+        $gravatarHeaders = get_headers($gravatar_url.'?d=404');
+        if ($gravatarHeaders[0] == 'HTTP/1.1 404 Not Found') {
             return false;
         }
 
-        return $gravatar_url . "?s=" . $size;
+        return $gravatar_url.'?s='.$size;
     }
 
     /**
-     * Check if the contact has debt (by the contact or the user for this contact)
-     * @return boolean
+     * Check if the contact has debt (by the contact or the user for this contact).
+     *
+     * @return bool
      */
     public function hasDebt()
     {
@@ -903,11 +820,457 @@ class Contact extends Model
     }
 
     /**
-     * Get all the tasks no matter the state, if any.
+     * Get the list of tags as a string to populate the tags form.
      */
-    public function getDebts()
+    public function getTagsAsString()
     {
-        return $this->debts;
+        $tags = [];
+
+        foreach ($this->tags as $tag) {
+            array_push($tags, $tag->name);
+        }
+
+        return implode(',', $tags);
     }
 
+    /**
+     * Get the list of tags for this contact.
+     */
+    public function getTagsForAPI()
+    {
+        return TagResource::collection($this->tags);
+    }
+
+    /**
+     * Update the last called info on the contact, if the call has been made
+     * in the most recent date.
+     *
+     * @param  Call   $call
+     * @return void
+     */
+    public function updateLastCalledInfo(Call $call)
+    {
+        if (is_null($this->last_talked_to)) {
+            $this->last_talked_to = $call->called_at;
+        } else {
+            $this->last_talked_to = $this->last_talked_to->max($call->called_at);
+        }
+
+        $this->save();
+    }
+
+    /**
+     * Assigns a birthday or birth year based on the data provided.
+     *
+     * @param string $approximation ['unknown', 'exact', 'approximate']
+     * @param \DateTime|string $exactDate
+     * @param string|int $age
+     * @return static
+     */
+    public function setBirthday($approximation, $dateOfBirth, $age = null)
+    {
+        // delete any existing reminder for a birthdate about this contact
+        $this->clearBirthdateReminder();
+
+        if ($approximation === 'approximate') {
+            $this->birthdate = Carbon::now()->subYears($age)->month(1)->day(1);
+        } elseif ($approximation === 'exact') {
+            $this->birthdate = Carbon::parse($dateOfBirth);
+            $this->setBirthdateReminder();
+        } else {
+            $this->birthdate = null;
+        }
+
+        $this->save();
+
+        return $this;
+    }
+
+    /**
+     * Set a reminder for the birthdate of this contact.
+     */
+    public function setBirthdateReminder()
+    {
+        $reminder = Reminder::addBirthdayReminder(
+            $this,
+            $this->birthdate
+        );
+
+        $this->birthday_reminder_id = $reminder->id;
+        $this->save();
+    }
+
+    /**
+     * Clear any existing birthdate reminder about this contact.
+     *
+     * @return void
+     */
+    public function clearBirthdateReminder()
+    {
+        if ($this->birthday_reminder_id) {
+            $this->reminders->find($this->birthday_reminder_id)->delete();
+            $this->birthday_reminder_id = null;
+            $this->save();
+        }
+    }
+
+    /**
+     * Get the list of all potential contacts to add as either a significant
+     * other or a kid.
+     *
+     * @return Collection
+     */
+    public function getPotentialContacts()
+    {
+        $partners = self::where('account_id', $this->account_id)
+                            ->where('is_partial', 0)
+                            ->where('id', '!=', $this->id)
+                            ->orderBy('first_name', 'asc')
+                            ->orderBy('last_name', 'asc')
+                            ->get();
+
+        // Filter out the contacts who already partner with the given contact
+        $counter = 0;
+        foreach ($partners as $partner) {
+            $relationship = Relationship::where('contact_id', $this->id)
+                                    ->where('with_contact_id', $partner->id)
+                                    ->count();
+
+            $offspring = Offspring::where('contact_id', $partner->id)
+                                    ->where('is_the_child_of', $this->id)
+                                    ->count();
+
+            $progenitor = Progenitor::where('contact_id', $partner->id)
+                                    ->where('is_the_parent_of', $this->id)
+                                    ->count();
+
+            if ($relationship != 0 or $offspring != 0 or $progenitor != 0) {
+                $partners->forget($counter);
+            }
+            $counter++;
+        }
+
+        return $partners;
+    }
+
+    /**
+     * Get the list of partners who are not "real" contacts.
+     *
+     * @return Collection
+     */
+    public function getPartialPartners()
+    {
+        $relationships = Relationship::where('contact_id', $this->id)
+                                    ->get();
+
+        $partners = collect();
+        foreach ($relationships as $relationship) {
+            $partner = self::findOrFail($relationship->with_contact_id);
+
+            if ($partner->is_partial) {
+                $partners->push($partner);
+            }
+        }
+
+        return $partners;
+    }
+
+    /**
+     * Get the list of kids who are not "real" contacts.
+     *
+     * @return Collection
+     */
+    public function getPartialOffsprings()
+    {
+        $offsprings = Offspring::where('is_the_child_of', $this->id)
+                                    ->get();
+
+        $kids = collect();
+        foreach ($offsprings as $offspring) {
+            $kid = self::findOrFail($offspring->contact_id);
+
+            if ($kid->is_partial) {
+                $kids->push($kid);
+            }
+        }
+
+        return $kids;
+    }
+
+    /**
+     * Set a relationship between the two contacts. Has the option to set a
+     * bilateral relationship if the partner is a real contact.
+     *
+     * @param Contact $partner
+     * @param  bool $bilateral
+     */
+    public function setRelationshipWith(Contact $partner, $bilateral = false)
+    {
+        $relationship = Relationship::create(
+            [
+                'account_id' => $this->account_id,
+                'contact_id' => $this->id,
+                'with_contact_id' => $partner->id,
+                'is_active' => 1,
+            ]
+        );
+
+        if ($bilateral) {
+            $relationship = Relationship::create(
+                [
+                    'account_id' => $this->account_id,
+                    'contact_id' => $partner->id,
+                    'with_contact_id' => $this->id,
+                    'is_active' => 1,
+                ]
+            );
+        }
+    }
+
+    /**
+     * Set a unilateral relationship to a bilateral one between the two contacts.
+     *
+     * @param Contact $partner
+     * @param  bool $bilateral
+     */
+    public function updateRelationshipWith(Contact $partner)
+    {
+        $relationship = Relationship::create(
+            [
+                'account_id' => $this->account_id,
+                'contact_id' => $partner->id,
+                'with_contact_id' => $this->id,
+                'is_active' => 1,
+            ]
+        );
+    }
+
+    /**
+     * Set a relationship between the two contacts. Has the option to set a
+     * bilateral relationship if the kid is a real contact.
+     *
+     * @param Contact $parent
+     * @param  bool $bilateral
+     */
+    public function isTheOffspringOf(Contact $parent, $bilateral = false)
+    {
+        $offspring = Offspring::create(
+            [
+                'account_id' => $this->account_id,
+                'contact_id' => $this->id,
+                'is_the_child_of' => $parent->id,
+            ]
+        );
+
+        if ($bilateral) {
+            $progenitor = Progenitor::create(
+                [
+                    'account_id' => $this->account_id,
+                    'contact_id' => $parent->id,
+                    'is_the_parent_of' => $this->id,
+                ]
+            );
+        }
+    }
+
+    /**
+     * Unset a relationship between the two contacts.
+     *
+     * @param  Contact $partner
+     * @param  bool $bilateral
+     */
+    public function unsetRelationshipWith(Contact $partner, $bilateral = false)
+    {
+        $relationship = Relationship::where('contact_id', $this->id)
+                        ->where('with_contact_id', $partner->id)
+                        ->first();
+
+        $relationship->delete();
+
+        if ($bilateral) {
+            $relationship = Relationship::where('contact_id', $partner->id)
+                        ->where('with_contact_id', $this->id)
+                        ->first();
+
+            $relationship->delete();
+        }
+    }
+
+    /**
+     * Unset a parenting relationship between the two contacts.
+     *
+     * @param  Contact $kid
+     * @param  bool $bilateral
+     */
+    public function unsetOffspring(Contact $kid, $bilateral = false)
+    {
+        $offspring = Offspring::where('contact_id', $kid->id)
+                        ->where('is_the_child_of', $this->id)
+                        ->first();
+
+        $offspring->delete();
+
+        if ($bilateral) {
+            $progenitor = Progenitor::where('contact_id', $this->id)
+                        ->where('is_the_parent_of', $kid->id)
+                        ->first();
+
+            $progenitor->delete();
+        }
+    }
+
+    /**
+     * Deletes all the events that mentioned the relationship with this partner.
+     *
+     * @var Contact
+     */
+    public function deleteEventsAboutTheseTwoContacts(Contact $contact, $type)
+    {
+        $events = Event::where('contact_id', $this->id)
+                        ->where('object_id', $contact->id)
+                        ->where('object_type', $type)
+                        ->delete();
+
+        $events = Event::where('contact_id', $contact->id)
+                        ->where('object_id', $this->id)
+                        ->where('object_type', $type)
+                        ->delete();
+    }
+
+    /**
+     * Get all the reminders about the contact, and also about the relatives
+     * (significant others and kids).
+     *
+     * @return Collection
+     */
+    public function getRemindersAboutRelatives()
+    {
+        $reminders = $this->reminders;
+
+        $partners = $this->getPartialPartners();
+        foreach ($partners as $partner) {
+            foreach ($partner->reminders as $reminder) {
+                $reminders->push($reminder);
+            }
+        }
+
+        $kids = $this->getPartialOffsprings();
+        foreach ($kids as $kid) {
+            foreach ($kid->reminders as $reminder) {
+                $reminders->push($reminder);
+            }
+        }
+
+        return $reminders;
+    }
+
+    /**
+     * Get the first progenitor of the contact.
+     * @return Contact
+     */
+    public function getFirstProgenitor()
+    {
+        $offspring = Offspring::where('contact_id', $this->id)
+                        ->first();
+
+        $progenitor = self::findOrFail($offspring->is_the_child_of);
+
+        return $progenitor;
+    }
+
+    /**
+     * Get the partner of the contact.
+     * @return Contact
+     */
+    public function getFirstPartner()
+    {
+        $relationship = Relationship::where('with_contact_id', $this->id)
+                        ->first();
+
+        $relationship = self::findOrFail($relationship->contact_id);
+
+        return $relationship;
+    }
+
+    /**
+     * Is this contact owed money?
+     * @return bool
+     */
+    public function isOwedMoney()
+    {
+        return $this
+            ->debts()
+            ->where('status', '=', 'inprogress')
+            ->getResults()
+            ->sum(function ($d) {
+                return $d->in_debt === 'yes' ? -$d->amount : $d->amount;
+            })
+            > 0;
+    }
+
+    /**
+     * How much is the debt.
+     * @return int
+     */
+    public function totalOutstandingDebtAmount()
+    {
+        return $this
+            ->debts()
+            ->where('status', '=', 'inprogress')
+            ->getResults()
+            ->sum(function ($d) {
+                return $d->in_debt === 'yes' ? -$d->amount : $d->amount;
+            });
+    }
+
+    /**
+     * Get all the family members.
+     * @return Collection
+     */
+    public function getFamilyMembers()
+    {
+        $offsprings = $this->offsprings;
+        $relationships = $this->activeRelationships;
+
+        $family = collect([]);
+        foreach ($offsprings as $offspring) {
+            $family->push($offspring->contact);
+        }
+
+        foreach ($relationships as $relationship) {
+            $family->push($relationship->with_contact);
+        }
+
+        return $family;
+    }
+
+    /**
+     * Indicates whether the contact has information about how they first met.
+     * @return bool
+     */
+    public function hasFirstMetInformation()
+    {
+        return ! is_null($this->first_met_additional_info) or ! is_null($this->first_met) or ! is_null($this->first_met_through_contact_id);
+    }
+
+    /**
+     * Gets the contact who introduced this person to the user.
+     * @return Contact
+     */
+    public function getIntroducer()
+    {
+        if (! $this->first_met_through_contact_id) {
+            return;
+        }
+
+        try {
+            $contact = self::where('account_id', $this->account_id)
+                ->where('id', $this->first_met_through_contact_id)
+                ->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            return;
+        }
+
+        return $contact;
+    }
 }

@@ -10,7 +10,6 @@
   </script>
 @endpush
 
-
 @section('content')
   <div class="dashboard">
 
@@ -35,10 +34,6 @@
                 <li>
                   <span class="stat-number">{{ $number_of_contacts }}</span>
                   <span class="stat-description">{{ trans('dashboard.statistics_contacts') }}</span>
-                </li>
-                <li>
-                  <span class="stat-number">{{ $number_of_kids }}</span>
-                  <span class="stat-description">{{ trans('dashboard.statistics_kids') }}</span>
                 </li>
                 <li>
                   <span class="stat-number">{{ $number_of_reminders }}</span>
@@ -102,8 +97,16 @@
                           {{ trans_choice('dashboard.reminders_in_days', $reminder_day_diff, ['number' => $reminder_day_diff]) }}
                           ({{ \App\Helpers\DateHelper::getShortDate($reminder->getNextExpectedDate()) }})
                         </span>
-                        <a href="/people/{{ $reminder->contact_id }}">{{ App\Contact::find($reminder->contact_id)->getCompleteName(auth()->user()->name_order) }}</a>:
-                        {{ $reminder->getTitle() }}
+                        @if ($reminder->contact->is_partial)
+                        {{ $reminder->contact->getCompleteName(auth()->user()->name_order) }}:
+                        @else
+                        <a href="/people/{{ $reminder->contact->id }}">{{ $reminder->contact->getCompleteName(auth()->user()->name_order) }}</a>:
+                        @endif
+                        @if ($reminder->is_birthday)
+                          {{ trans('people.reminders_birthday', ['name' => $reminder->contact->first_name]) }}
+                        @else
+                          {{ $reminder->getTitle() }}
+                        @endif
                       </li>
                     @endforeach
                   </ul>
@@ -174,80 +177,11 @@
                 <ul class="event-list">
                   @foreach($events as $event)
                     <li class="event-list-item">
-
-                      {{-- ICON--}}
-                      <div class="event-icon">
-                        @if ($event['nature_of_operation'] == 'create')
-                          <i class="fa fa-plus-square-o"></i>
-                        @endif
-
-                        @if ($event['nature_of_operation'] == 'update')
-                          <i class="fa fa-pencil-square-o"></i>
-                        @endif
-                      </div>
-
-                      {{-- DESCRIPTION --}}
-                      <div class="event-description">
-
-                        {{-- YOU ADDED/YOU UPDATED --}}
-                        @if ($event['nature_of_operation'] == 'create')
-                          {{ trans('dashboard.event_create') }}
-                        @endif
-
-                        @if ($event['nature_of_operation'] == 'update')
-                          {{ trans('dashboard.event_update') }}
-                        @endif
-
-                        {{-- PEOPLE --}}
-                        @if ($event['object_type'] == 'contact')
-                          @include('dashboard.events._people')
-                        @endif
-
-                        {{-- REMINDERS --}}
-                        @if ($event['object_type'] == 'reminder')
-                          @include('dashboard.events._reminders')
-                        @endif
-
-                        {{-- SIGNIFICANT OTHER --}}
-                        @if ($event['object_type'] == 'significantother')
-                          @include('dashboard.events._significantothers')
-                        @endif
-
-                        {{-- KIDS --}}
-                        @if ($event['object_type'] == 'kid')
-                          @include('dashboard.events._kids')
-                        @endif
-
-                        {{-- NOTES --}}
-                        @if ($event['object_type'] == 'note')
-                          @include('dashboard.events._notes')
-                        @endif
-
-                        {{-- ACTIVITIES --}}
-                        @if ($event['object_type'] == 'activity')
-                          @include('dashboard.events._activities')
-                        @endif
-
-                        {{-- TASKS --}}
-                        @if ($event['object_type'] == 'task')
-                          @include('dashboard.events._tasks')
-                        @endif
-
-                        {{-- GIFTS --}}
-                        @if ($event['object_type'] == 'gift')
-                          @include('dashboard.events._gifts')
-                        @endif
-
-                        {{-- DEBTS --}}
-                        @if ($event['object_type'] == 'debt')
-                          @include('dashboard.events._debts')
-                        @endif
-
-                      </div>
+                      @include('dashboard.events._'.$event['object_type'])
 
                       {{-- DATE --}}
-                      <div class="event-date">
-                        {{ \App\Helpers\DateHelper::getShortDateWithTime($event['date']) }}
+                      <div class="event-date pull-right">
+                        {{ $event['date']->diffForHumans() }}
                       </div>
                     </li>
                   @endforeach
@@ -269,7 +203,7 @@
               <h3>{{ trans('dashboard.tab_last_edited_contacts') }}</h3>
               <ul>
                 @foreach ($lastUpdatedContacts as $contact)
-                  <li><a href="/people/{{ $contact->id }}">{{ $contact->getCompleteName(auth()->user()->name_order) }}</a></li>
+                  <li><a href="{{ route('people.show', $contact) }}">{{ $contact->getCompleteName(auth()->user()->name_order) }}</a></li>
                 @endforeach
               </ul>
             </div>

@@ -4,13 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}"/>
     <title>@yield('title', 'Monica - a CRM for your friends and family')</title>
 
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" rel="stylesheet">
-    <link rel="stylesheet" href="{{ elixir('css/app.css') }}">
+    <link rel="stylesheet" href="{{ mix('css/app.css') }}">
     <link rel="shortcut icon" href="/img/favicon.png">
+    <script>
+      window.Laravel = <?php echo json_encode([
+          'csrfToken' => csrf_token(),
+      ]); ?>
+    </script>
   </head>
-  <body>
+  <body data-account-id={{ auth()->user()->account_id }}>
 
     @include('partials.header')
 
@@ -20,23 +26,13 @@
 
     @include('partials.footer')
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/list.js/1.5.0/list.min.js"></script>
-    <script>
-      var options = {
-        valueNames: [ 'people-list-item-name' ]
-      };
-      var userList = new List('search-list', options);
-    </script>
-
-    @if (config('monica.requires_subscription'))
-    <script src="https://js.stripe.com/v3/"></script>
-    <script>
-        var stripe = Stripe('{{ config('services.stripe.key') }}');
-    </script>
+    {{-- THE JS FILE OF THE APP --}}
+    {{-- Load everywhere except on the Upgrade account page --}}
+    @if (Route::currentRouteName() != 'settings.subscriptions.upgrade')
+      <script src="{{ mix('js/app.js') }}"></script>
     @endif
 
-    <script src="{{ elixir('js/app.js') }}"></script>
-
+    {{-- TRACKING SHIT --}}
     @if(config('app.env') != 'local' && !empty(config('monica.google_analytics_app_id')))
       <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -2,8 +2,8 @@
 
 namespace App;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -28,6 +28,16 @@ class Gift extends Model
      * @var array
      */
     protected $dates = ['date_offered'];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_an_idea' => 'boolean',
+        'has_been_offered' => 'boolean',
+    ];
 
     /**
      * Get the account record associated with the gift.
@@ -56,64 +66,51 @@ class Gift extends Model
      */
     public function recipient()
     {
-        switch ($this->about_object_type) {
-            case 'kid':
-                return $this->belongsTo(Kid::class, 'about_object_id');
-            case 'significantOther':
-                return $this->belongsTo(SignificantOther::class, 'about_object_id');
-            default:
-                return $this->contact();
-        }
+        return $this->hasOne(Contact::class, 'id', 'is_for');
     }
 
     /**
-     * Limit results to already offered gifts
+     * Limit results to already offered gifts.
      *
      * @param Builder $query
      * @return Builder
      */
     public function scopeOffered(Builder $query)
     {
-        return $query->where('has_been_offered', true);
+        return $query->where('has_been_offered', 1);
     }
 
     /**
-     * Limit results to gifts at the idea stage
+     * Limit results to gifts at the idea stage.
      *
      * @param Builder $query
      * @return Builder
      */
     public function scopeIsIdea(Builder $query)
     {
-        return $query->where('is_an_idea', true);
+        return $query->where('is_an_idea', 1);
     }
 
     /**
      * Check whether the gift is meant for a particular member
-     * of the contact's family
+     * of the contact's family.
      *
      * @return bool
      */
     public function hasParticularRecipient()
     {
-        return $this->about_object_type !== null;
+        return $this->is_for !== null;
     }
 
     /**
-     * Set the recipient for the gift
+     * Set the recipient for the gift.
      *
-     * @param SignificantOther|Kid|string $recipient
+     * @param string $recipient
      * @return static
      */
     public function forRecipient($recipient)
     {
-        if (is_string($recipient)) {
-            $this->about_object_id = substr($recipient, 1);
-            $this->about_object_type = substr($recipient, 0, 1) === 'K' ? 'kid' : 'sginificantOther';
-        } elseif ($recipient instanceof Model) {
-            $this->about_object_id = $recipient->id;
-            $this->about_object_type = camel_case(class_basename($recipient));
-        }
+        $this->is_for = $recipient;
 
         return $this;
     }
@@ -123,8 +120,6 @@ class Gift extends Model
         if ($this->hasParticularRecipient()) {
             return $this->recipient->first_name;
         }
-
-        return null;
     }
 
     public function getName()
@@ -144,7 +139,7 @@ class Gift extends Model
 
     public function getValue()
     {
-        return $this->value_in_dollars;
+        return $this->value;
     }
 
     public function getCreatedAt()

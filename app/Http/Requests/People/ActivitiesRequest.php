@@ -3,7 +3,6 @@
 namespace App\Http\Requests\People;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class ActivitiesRequest extends FormRequest
 {
@@ -25,10 +24,11 @@ class ActivitiesRequest extends FormRequest
     public function rules()
     {
         return [
+            'contacts' => 'required',
             'summary' => 'required',
             'date_it_happened' => 'required|date',
             'description' => 'string|nullable',
-            'activity_type_id' => 'int|nullable'
+            'activity_type_id' => 'int|nullable',
         ];
     }
 }

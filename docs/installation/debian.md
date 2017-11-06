@@ -8,16 +8,19 @@ sudo apt install apache2 mariadb-server php7.0 php7.0-mysql php7.0-xml \
 ```
 
 #### 2. Clone the repository
+
 ```
 sudo git clone https://github.com/monicahq/monica.git /var/www/monica
 ```
 
 #### 3. Change permissions on the new folder
+
 ```
 sudo chown -R www-data:www-data /var/www/monica
 ```
 
 #### 4. Install nodejs (this is needed for npm)
+
 ```
 curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 ```
@@ -27,15 +30,9 @@ sudo apt-get install -y nodejs
 
 #### 5. Install composer
 
-```
-sudo php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-sudo php -r "if (hash_file('SHA384', 'composer-setup.php') === '669656bab3166a7aff8a7506b8cb2d1c292f042046c5a994c43155c0be6190fa0355160742ab2e1c88d40d5be660b410') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-sudo php composer-setup.php
-sudo php -r "unlink('composer-setup.php');"
-```
+Download and install the binary by following the [Command-line installation of composer](https://getcomposer.org/download/).
 
-The first set of commands downloaded the binary and this command
-renames it moves it to the bin directory.
+Move it to the bin directory.
 ```
 sudo mv composer.phar /usr/local/bin/composer
 ```
@@ -78,7 +75,6 @@ exit
 ```
 
 #### 7. Configure Monica
-
 
 Run `composer install` in the folder the repository has been cloned to.
 Which in our case would be /var/www/monica.
@@ -152,23 +148,27 @@ The next 5 lines are taken more or less 1:1 from the main generic installation
 guide. Mainly because the author was unsure about their purpose.
 
 Run `php artisan key:generate` to generate an application key. This will set `APP_KEY` with the right value automatically.
-`php artisan migrate` to run all migrations.
-`php artisan storage:link` to enable avatar uploads for the contacts.
-`php artisan db:seed --class ActivityTypesTableSeeder` to populate the
+* `php artisan migrate` to run all migrations.
+* `php artisan storage:link` to enable avatar uploads for the contacts.
+* `php artisan db:seed --class ActivityTypesTableSeeder` to populate the
 activity types.
-`php artisan db:seed --class CountriesSeederTable` to populate the countries
+* `php artisan db:seed --class CountriesSeederTable` to populate the countries
 table.
+* `php artisan passport:install` to generate the secure asset tokens required
+for the API.
 
 #### 8. Configure cron job
 
-as recommended by the generic installation instructions we create a
+As recommended by the generic installation instructions we create a
 cronjob which runs `artisan schedule:run` every minute.
+
 For this execute this command:
 ```
 sudo crontab -e
 ```
 
 And then add this line to the bottom of the window that opens.
+
 ```
 * * * * * sudo -u www-data php /var/www/html/artisan schedule:run
 ```

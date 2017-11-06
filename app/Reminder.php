@@ -7,7 +7,6 @@ use Carbon\Carbon;
 use App\Helpers\DateHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use MartinJoiner\OrdinalNumber\OrdinalNumber;
 
 /**
  * @property Account $account
@@ -30,6 +29,15 @@ class Reminder extends Model
     protected $dates = ['last_triggered', 'next_expected_date'];
 
     /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_birthday' => 'boolean',
+    ];
+
+    /**
      * Get the account record associated with the reminder.
      *
      * @return BelongsTo
@@ -50,7 +58,7 @@ class Reminder extends Model
     }
 
     /**
-     * Get the next_expected_date field according to user's timezone
+     * Get the next_expected_date field according to user's timezone.
      *
      * @param string $value
      * @return string
@@ -65,7 +73,7 @@ class Reminder extends Model
     }
 
     /**
-     * Correctly set the frequency type
+     * Correctly set the frequency type.
      *
      * @param string $value
      */
@@ -75,33 +83,30 @@ class Reminder extends Model
     }
 
     /**
-     * Add a new birthday reminder
+     * Add a new birthday reminder.
      *
      * @param Contact $contact
-     * @param string $title
      * @param Carbon|string $date
-     * @param Kid $kid
-     * @param SignificantOther $kid
-     * @return static
+     * @return Reminder
      */
-    public static function addBirthdayReminder($contact, $title, $date, $kid = null, $significantOther = null)
+    public static function addBirthdayReminder(Contact $contact, $birthdate)
     {
-        $date = Carbon::parse($date);
+        $birthdate = Carbon::parse($birthdate);
 
         $reminder = $contact->reminders()
             ->create([
-                'title' => $title,
                 'frequency_type' => 'year',
                 'frequency_number' => 1,
-                'next_expected_date' => $date,
+                'next_expected_date' => $birthdate,
                 'account_id' => $contact->account_id,
-                'is_birthday' => 'true',
-                'about_object' => $kid ? 'kid' : ($significantOther ? 'significantother' : 'contact'),
-                'about_object_id' => $kid ? $kid->id : ($significantOther ? $significantOther->id : $contact->id)
+                'is_birthday' => true,
             ]);
 
-        $reminder->calculateNextExpectedDate($date, 'year', 1)
-            ->save();
+        foreach ($contact->account->users as $user) {
+            $userTimezone = $user->timezone;
+        }
+
+        $reminder->calculateNextExpectedDate($userTimezone)->save();
 
         return $reminder;
     }
@@ -112,8 +117,14 @@ class Reminder extends Model
      */
     public function getTitle()
     {
+        if ($this->is_birthday) {
+            // we need to construct the title of the reminder as in the case of a
+            // birthday, the title field is null
+            return trans('people.reminders_birthday', ['name' => $this->contact->first_name]);
+        }
+
         if (is_null($this->title)) {
-            return null;
+            return;
         }
 
         return $this->title;
@@ -126,7 +137,7 @@ class Reminder extends Model
     public function getDescription()
     {
         if (is_null($this->description)) {
-            return null;
+            return;
         }
 
         return $this->description;
@@ -143,40 +154,23 @@ class Reminder extends Model
     }
 
     /**
-     * Calculate the next expected date for this reminder based on the current
-     * start date.
-     * @param  Carbon $startDate
-     * @param  string $frequencyTYpe
-     * @param  int $frequencyNumber
+     * Calculate the next expected date for this reminder.
+     *
      * @return static
      */
-    public function calculateNextExpectedDate($startDate, $frequencyType, $frequencyNumber)
+    public function calculateNextExpectedDate($timezone)
     {
-        if ($startDate->isToday()) {
-            $nextDate = DateHelper::calculateNextOccuringDate($startDate, $frequencyType, $frequencyNumber);
-            $this->next_expected_date = $nextDate;
+        $date = $this->next_expected_date->setTimezone($timezone);
+
+        while ($date->isPast()) {
+            $date = DateHelper::addTimeAccordingToFrequencyType($date, $this->frequency_type, $this->frequency_number);
         }
 
-        if ($startDate >= $startDate->tomorrow()) {
-            $this->next_expected_date = $startDate;
-        } else {
-
-            // Date is in the past, we need to extract the month and day, and
-            // setup the next occurence at those dates.
-            $nextDate = DateHelper::calculateNextOccuringDate($startDate, $frequencyType, $frequencyNumber);
-
-            while ($nextDate->isPast()) {
-                $nextDate = DateHelper::calculateNextOccuringDate($nextDate, $frequencyType, $frequencyNumber);
-            }
-
-            // This is the case where we set the date in the past, but the next
-            // occuring date is still today, so we make sure it skips to the
-            // next occuring date.
-            if ($startDate->isToday()) {
-                $nextDate = DateHelper::calculateNextOccuringDate($startDate, $frequencyType, $frequencyNumber);
-            }
-            $this->next_expected_date = $nextDate;
+        if ($date->isToday()) {
+            $date = DateHelper::addTimeAccordingToFrequencyType($date, $this->frequency_type, $this->frequency_number);
         }
+
+        $this->next_expected_date = $date;
 
         return $this;
     }

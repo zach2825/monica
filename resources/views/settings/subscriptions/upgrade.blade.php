@@ -25,7 +25,7 @@
     </div>
   </div>
 
-  <div class="main-content modal subscriptions">
+  <div class="main-content central-form subscriptions">
     <div class="{{ Auth::user()->getFluidLayout() }}">
       <div class="row">
         <div class="col-xs-12 col-sm-6 col-sm-offset-3">
@@ -34,30 +34,25 @@
 
           <form action="/settings/subscriptions/processPayment" method="POST" id="payment-form">
             {{ csrf_field() }}
-            <input type="hidden" name="planName" value="{{ config('monica.paid_plan_friendly_name') }}">
 
             <h2>{{ trans('settings.subscriptions_upgrade_title') }}</h2>
 
             <p>{!! trans('settings.subscriptions_upgrade_description') !!}</p>
 
-            <div class="form-group">
-              <label for="card-element" id="label-card-element">
-                {{ trans('settings.subscriptions_upgrade_credit') }}
-              </label>
-              <div id="card-element">
-              </div>
-            </div>
-
-            <!-- Used to display form errors -->
-            <div id="card-errors" role="alert"></div>
+            <script
+              src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+              data-key="{{ config('services.stripe.key') }}"
+              data-amount="{{ config('monica.paid_plan_price') }}"
+              data-name="Monica"
+              data-email="{{ auth()->user()->email }}"
+              data-description="Widget"
+              data-image="https://s3.amazonaws.com/stripe-uploads/adK6oPZbepKr0KJ70S42c01UPm0HLFL2merchant-icon-1497151424388-Group.png"
+              data-locale="auto"
+              data-currency="usd">
+            </script>
 
             <div class="warning-zone">
               <p>{{ trans('settings.subscriptions_upgrade_warning') }}</p>
-            </div>
-
-            <div class="form-group actions">
-              <button type="submit" class="btn btn-primary"><i class="fa fa-lock"></i>{{ trans('settings.subscriptions_upgrade_cta', ['price' => config('monica.paid_plan_price')]) }}</button>
-              <a href="/settings" class="btn btn-secondary">{{ trans('app.cancel') }}</a>
             </div>
 
           </form>

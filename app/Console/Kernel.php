@@ -19,7 +19,9 @@ class Kernel extends ConsoleKernel
         'App\Console\Commands\CalculateStatistics',
         'App\Console\Commands\ImportCSV',
         'App\Console\Commands\SetupProduction',
-        'App\Console\Commands\ImportVCards'
+        'App\Console\Commands\ImportVCards',
+        'App\Console\Commands\PingVersionServer',
+        'App\Console\Commands\FixRemindersNotSent',
     ];
 
     /**
@@ -32,5 +34,6 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('monica:sendnotifications')->hourly();
         $schedule->command('monica:calculatestatistics')->daily();
+        $schedule->command('monica:ping')->daily();
     }
 }

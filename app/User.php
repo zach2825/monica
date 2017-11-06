@@ -2,13 +2,14 @@
 
 namespace App;
 
+use Laravel\Passport\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable,HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -16,7 +17,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'timezone', 'locale', 'currency_id', 'fluid_container', 'name_order'
+        'name', 'email', 'password', 'timezone', 'locale', 'currency_id', 'fluid_container', 'name_order',
     ];
 
     /**
@@ -44,7 +45,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Assigns a default value just in case the sort order is empty
+     * Assigns a default value just in case the sort order is empty.
      *
      * @param string $value
      * @return string
@@ -92,15 +93,15 @@ class User extends Authenticatable
         if ($this->name_order == 'firstname_first') {
             $completeName = $this->first_name;
 
-            if (!is_null($this->last_name)) {
-                $completeName = $completeName . ' ' . $this->last_name;
+            if (! is_null($this->last_name)) {
+                $completeName = $completeName.' '.$this->last_name;
             }
         } else {
-            if (!is_null($this->last_name)) {
+            if (! is_null($this->last_name)) {
                 $completeName = $this->last_name;
             }
 
-            $completeName = $completeName . ' ' . $this->first_name;
+            $completeName = $completeName.' '.$this->first_name;
         }
 
         return $completeName;

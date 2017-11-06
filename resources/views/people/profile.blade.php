@@ -3,7 +3,7 @@
 @section('title', $contact->getCompleteName(auth()->user()->name_order) )
 
 @section('content')
-  <div class="people-show">
+  <div class="people-show" data-contact-id="{{ $contact->id }}">
     {{ csrf_field() }}
 
     {{-- Breadcrumb --}}
@@ -41,12 +41,16 @@
           </div>
 
           <div class="col-xs-12 col-sm-9">
+            <div class="row section calls">
+              @include('people.calls.index')
+            </div>
+
             <div class="row section notes">
               @include('people.notes.index')
             </div>
 
             <div class="row section activities">
-              @include('people.activities.index')
+              @include('activities.index')
             </div>
 
             <div class="row section reminders">
@@ -71,4 +75,7 @@
 
     </div>
   </div>
+
+  @include('people.modal.log_call')
+
 @endsection

@@ -8,7 +8,6 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 class ContactTest extends FeatureTestCase
 {
-
     use DatabaseTransactions;
 
     /**
@@ -27,11 +26,6 @@ class ContactTest extends FeatureTestCase
         return [$user, $contact];
     }
 
-    /**
-     * A basic test example.
-     *
-     * @return void
-     */
     public function test_user_can_see_contacts()
     {
         list($user, $contact) = $this->fetchUser();
@@ -39,7 +33,7 @@ class ContactTest extends FeatureTestCase
         $response = $this->get('/people');
 
         $response->assertSee(
-            $contact->first_name . ' ' . $contact->middle_name . ' ' . $contact->last_name
+            $contact->getCompleteName()
         );
     }
 
@@ -77,31 +71,6 @@ class ContactTest extends FeatureTestCase
             'account_id' => $user->account_id,
             'body' => $body,
         ]);
-
-    }
-
-    public function test_user_can_add_activity_to_contact()
-    {
-        list($user, $contact) = $this->fetchUser();
-
-        $activity = [
-            'summary' => $this->faker->sentence('5'),
-            'date_it_happened' => $this->faker->date('Y-m-d'),
-            'description' => $this->faker->paragraph(),
-        ];
-
-        $this->post(
-            route('people.activities.store', $contact),
-            $activity
-        );
-
-        $this->assertDatabaseHas(
-            'activities',
-            $activity + [
-                'contact_id' => $contact->id,
-                'account_id' => $user->account_id,
-            ]
-        );
     }
 
     public function test_user_can_be_reminded_about_an_event_once()
@@ -128,7 +97,6 @@ class ContactTest extends FeatureTestCase
                 'account_id' => $user->account_id,
             ])
         );
-
     }
 
     public function test_user_can_add_a_task_to_a_contact()
@@ -141,7 +109,7 @@ class ContactTest extends FeatureTestCase
         ];
 
         $this->post(
-            '/people/' . $contact->id . '/tasks/store',
+            '/people/'.$contact->id.'/tasks/store',
             $task
         );
 
@@ -162,12 +130,12 @@ class ContactTest extends FeatureTestCase
             'offered' => false,
             'name' => $this->faker->word,
             'url' => $this->faker->url,
-            'value_in_dollars' => $this->faker->numberBetween(1, 2000),
+            'value' => $this->faker->numberBetween(1, 2000),
             'comment' => $this->faker->sentence(),
         ];
 
         $this->post(
-            '/people/' . $contact->id . '/gifts/store',
+            '/people/'.$contact->id.'/gifts/store',
             $gift
         );
 
@@ -228,15 +196,13 @@ class ContactTest extends FeatureTestCase
             ]);
     }
 
-
     public function test_a_contact_can_have_food_preferences()
     {
         list($user, $contact) = $this->fetchUser();
 
         $food = ['food' => $this->faker->sentence()];
 
-        $this->post('/people/' . $contact->id . '/food/save', $food);
-
+        $this->post('/people/'.$contact->id.'/food/save', $food);
 
         $food['id'] = $contact->id;
         $this->changeArrayKey('food', 'food_preferencies', $food);
@@ -248,7 +214,7 @@ class ContactTest extends FeatureTestCase
     {
         list($user, $contact) = $this->fetchUser();
 
-        $this->get('/people/' . $contact->id . '/delete');
+        $this->delete('/people/'.$contact->id);
 
         $this->assertDatabaseMissing('contacts', [
             'id' => $contact->id,

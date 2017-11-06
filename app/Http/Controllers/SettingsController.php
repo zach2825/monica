@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use Auth;
+use App\Tag;
 use App\User;
+use App\ImportJob;
 use Carbon\Carbon;
 use App\Invitation;
 use Illuminate\Http\Request;
-use App\Helpers\RandomHelper;
 use App\Jobs\SendNewUserAlert;
 use App\Jobs\ExportAccountAsSQL;
+use App\Jobs\AddContactFromVCard;
 use App\Jobs\SendInvitationEmail;
+use App\Http\Requests\ImportsRequest;
 use App\Http\Requests\SettingsRequest;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\InvitationRequest;
@@ -41,9 +44,9 @@ class SettingsController extends Controller
                 'timezone',
                 'locale',
                 'currency_id',
-                'name_order'
+                'name_order',
             ]) + [
-                'fluid_container' => $request->get('layout')
+                'fluid_container' => $request->get('layout'),
             ]
         );
 
@@ -52,7 +55,7 @@ class SettingsController extends Controller
     }
 
     /**
-     * Delete user account
+     * Delete user account.
      *
      * @param Request $request
      * @return \Illuminate\Http\Response
@@ -62,16 +65,20 @@ class SettingsController extends Controller
         $user = $request->user();
         $account = $user->account;
 
-        if($account) {
+        if ($account) {
             $account->reminders->each->forceDelete();
-            $account->kids->each->forceDelete();
             $account->notes->each->forceDelete();
-            $account->significantOthers->each->forceDelete();
             $account->tasks->each->forceDelete();
             $account->activities->each->forceDelete();
+            $account->debts->each->forceDelete();
             $account->events->each->forceDelete();
             $account->contacts->each->forceDelete();
             $account->invitations->each->forceDelete();
+            $account->importjobs->each->forceDelete();
+            $account->importjobreports->each->forceDelete();
+            $account->offpsrings->each->forceDelete();
+            $account->relationships->each->forceDelete();
+            $account->progenitors->each->forceDelete();
             $account->forceDelete();
         }
 
@@ -82,7 +89,38 @@ class SettingsController extends Controller
     }
 
     /**
-     * Display the export view
+     * Reset user account.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function reset(Request $request)
+    {
+        $user = $request->user();
+        $account = $user->account;
+
+        if ($account) {
+            $account->reminders->each->forceDelete();
+            $account->notes->each->forceDelete();
+            $account->tasks->each->forceDelete();
+            $account->activities->each->forceDelete();
+            $account->debts->each->forceDelete();
+            $account->events->each->forceDelete();
+            $account->contacts->each->forceDelete();
+            $account->invitations->each->forceDelete();
+            $account->importjobs->each->forceDelete();
+            $account->importjobreports->each->forceDelete();
+            $account->offpsrings->each->forceDelete();
+            $account->relationships->each->forceDelete();
+            $account->progenitors->each->forceDelete();
+        }
+
+        return redirect('/settings')
+                    ->with('status', trans('settings.reset_success'));
+    }
+
+    /**
+     * Display the export view.
      *
      * @return \Illuminate\Http\Response
      */
@@ -92,7 +130,7 @@ class SettingsController extends Controller
     }
 
     /**
-     * Exports the data of the account in SQL format
+     * Exports the data of the account in SQL format.
      *
      * @return \Illuminate\Http\Response
      */
@@ -101,12 +139,71 @@ class SettingsController extends Controller
         $path = $this->dispatchNow(new ExportAccountAsSQL());
 
         return response()
-            ->download(Storage::disk('public')->getDriver()->getAdapter()->getPathPrefix() . $path, 'monica.sql')
+            ->download(Storage::disk('public')->getDriver()->getAdapter()->getPathPrefix().$path, 'monica.sql')
             ->deleteFileAfterSend(true);
     }
 
     /**
-     * Display the users view
+     * Display the import view.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function import()
+    {
+        if (auth()->user()->account->importjobs->count() == 0) {
+            return view('settings.imports.blank');
+        }
+
+        return view('settings.imports.index');
+    }
+
+    /**
+     * Display the Import people's view.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function upload()
+    {
+        if (config('monica.requires_subscription') && ! auth()->user()->account->isSubscribed()) {
+            return redirect('/settings/subscriptions');
+        }
+
+        return view('settings.imports.upload');
+    }
+
+    public function storeImport(ImportsRequest $request)
+    {
+        $filename = $request->file('vcard')->store('imports', 'public');
+
+        $importJob = auth()->user()->account->importjobs()->create([
+            'user_id' => auth()->user()->id,
+            'type' => 'vcard',
+            'filename' => $filename,
+        ]);
+
+        dispatch(new AddContactFromVCard($importJob));
+
+        return redirect()->route('settings.import');
+    }
+
+    /**
+     * Display the import report view.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function report($importJobId)
+    {
+        $importJob = ImportJob::findOrFail($importJobId);
+
+        if ($importJob->account_id != auth()->user()->account->id) {
+            return redirect()->route('settings.index');
+        }
+
+        return view('settings.imports.report', compact('importJob'));
+    }
+
+    /**
+     * Display the users view.
      *
      * @return \Illuminate\Http\Response
      */
@@ -144,7 +241,7 @@ class SettingsController extends Controller
     public function inviteUser(InvitationRequest $request)
     {
         // Make sure the confirmation to invite has not been bypassed
-        if(! $request->get('confirmation')) {
+        if (! $request->get('confirmation')) {
             return redirect()->back()->withErrors(trans('settings.users_error_please_confirm'))->withInput();
         }
 
@@ -167,7 +264,7 @@ class SettingsController extends Controller
             + [
                 'invited_by_user_id' => auth()->user()->id,
                 'account_id' => auth()->user()->account_id,
-                'invitation_key' => RandomHelper::generateString(100),
+                'invitation_key' => str_random(100),
             ]
         );
 
@@ -198,7 +295,7 @@ class SettingsController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param String $key
+     * @param string $key
      * @return \Illuminate\Http\Response
      */
     public function acceptInvitation($key)
@@ -217,7 +314,7 @@ class SettingsController extends Controller
      * Store the specified resource.
      *
      * @param Request $request
-     * @param String $key
+     * @param string $key
      * @return \Illuminate\Http\Response
      */
     public function storeAcceptedInvitation(Request $request, $key)
@@ -252,7 +349,7 @@ class SettingsController extends Controller
     }
 
     /**
-     * Delete additional user account
+     * Delete additional user account.
      *
      * @param Request $request
      * @return \Illuminate\Http\Response
@@ -275,5 +372,34 @@ class SettingsController extends Controller
 
         return redirect('/settings/users')
                 ->with('success', trans('settings.users_list_delete_success'));
+    }
+
+    /**
+     * Display the list of tags for this account.
+     */
+    public function tags()
+    {
+        return view('settings.tags');
+    }
+
+    public function deleteTag(Request $request, $tagId)
+    {
+        $tag = Tag::findOrFail($tagId);
+
+        if ($tag->account_id != auth()->user()->account_id) {
+            return redirect('/');
+        }
+
+        $tag->contacts()->detach();
+
+        $tag->delete();
+
+        return redirect('/settings/tags')
+                ->with('success', trans('settings.tags_list_delete_success'));
+    }
+
+    public function api()
+    {
+        return view('settings.api.index');
     }
 }

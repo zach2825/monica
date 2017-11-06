@@ -5,9 +5,6 @@ namespace Tests\Helper;
 use Carbon\Carbon;
 use Tests\FeatureTestCase;
 use App\Helpers\DateHelper;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 class DateHelperTest extends FeatureTestCase
 {
@@ -104,6 +101,30 @@ class DateHelperTest extends FeatureTestCase
         $this->assertEquals(
             'fr',
             DateHelper::getLocale()
+        );
+    }
+
+    public function test_add_time_according_to_frequency_type_returns_the_right_value()
+    {
+        $date = '2017-01-22 17:56:03';
+        $timezone = 'America/New_York';
+
+        $testDate = DateHelper::createDateFromFormat($date, $timezone);
+        $this->assertEquals(
+            '2017-01-29',
+            DateHelper::addTimeAccordingToFrequencyType($testDate, 'week', 1)->toDateString()
+        );
+
+        $testDate = DateHelper::createDateFromFormat($date, $timezone);
+        $this->assertEquals(
+            '2017-02-22',
+            DateHelper::addTimeAccordingToFrequencyType($testDate, 'month', 1)->toDateString()
+        );
+
+        $testDate = DateHelper::createDateFromFormat($date, $timezone);
+        $this->assertEquals(
+            '2018-01-22',
+            DateHelper::addTimeAccordingToFrequencyType($testDate, 'year', 1)->toDateString()
         );
     }
 }

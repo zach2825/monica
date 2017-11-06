@@ -2,11 +2,10 @@
 
 namespace App;
 
-use App\ActivityType;
-use App\Helpers\DateHelper;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Http\Resources\Contact\ContactShort as ContactShortResource;
 
 /**
  * @property Account $account
@@ -58,9 +57,9 @@ class Activity extends Model
      *
      * @return BelongsTo
      */
-    public function contact()
+    public function contacts()
     {
-        return $this->belongsTo(Contact::class);
+        return $this->belongsToMany(Contact::class);
     }
 
     /**
@@ -74,7 +73,7 @@ class Activity extends Model
     }
 
     /**
-     * Get the date_it_happened field according to user's timezone
+     * Get the date_it_happened field according to user's timezone.
      *
      * @param string $value
      * @return string
@@ -126,5 +125,20 @@ class Activity extends Model
     public function getTitle()
     {
         return $this->type ? $this->type->key : null;
+    }
+
+    /**
+     * Get all the contacts this activity is associated with.
+     */
+    public function getContactsForAPI()
+    {
+        $attendees = collect([]);
+
+        foreach ($this->contacts as $contact) {
+            $attendee = Contact::find($contact->id);
+            $attendees->push(new ContactShortResource($attendee));
+        }
+
+        return $attendees;
     }
 }
