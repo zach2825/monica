@@ -56,11 +56,11 @@
                   <span class="stat-description">{{ trans('dashboard.statistics_tasks') }}</span>
                 </li>
                 <li>
-                  <span class="stat-number">{{ MoneyHelper::format($debt_owed) }}</span>
+                  <span class="stat-number">{{App\Helpers\MoneyHelper::format($debt_owed) }}</span>
                   <span class="stat-description">{{ trans('dashboard.statistics_deb_owed') }}</span>
                 </li>
                 <li>
-                  <span class="stat-number">{{ MoneyHelper::format($debt_due) }}</span>
+                  <span class="stat-number">{{App\Helpers\MoneyHelper::format($debt_due) }}</span>
                   <span class="stat-description">{{ trans('dashboard.statistics_debt_due') }}</span>
                 </li>
               </ul>
@@ -156,7 +156,7 @@
                         <span class="debt-description">{{ trans('dashboard.debts_you_due') }}</span>
                         @endif
 
-                        {{ MoneyHelper::format($debt->amount) }}
+                        {{App\Helpers\MoneyHelper::format($debt->amount) }}
 
                         @if (! is_null($debt->reason))
                         <span class="debt-description">{{ trans('dashboard.debts_for') }}</span>
