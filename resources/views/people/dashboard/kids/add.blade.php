@@ -80,7 +80,7 @@
 
                     <div class="form-group">
                       <label for="existingKid">{{ trans('people.kids_add_existing_contact', ['name' => $contact->getFirstName()]) }}</label>
-                      <select class="form-control" name="existingKid" id="existingKid">
+                      <select class="form-control select2" name="existingKid" id="existingKid">
                         @foreach ($contact->getPotentialContacts() as $kid)
 
                           <option value="{{ $kid->id }}">{{ $kid->getCompleteName(auth()->user()->name_order) }}</option>

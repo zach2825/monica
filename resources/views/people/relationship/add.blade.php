@@ -80,7 +80,7 @@
 
                     <div class="form-group">
                       <label for="existingPartner">{{ trans('people.significant_other_add_existing_contact', ['name' => $contact->getFirstName()]) }}</label>
-                      <select class="form-control" name="existingPartner" id="existingPartner">
+                      <select class="form-control select2" name="existingPartner" id="existingPartner">
                         @foreach ($contact->getPotentialContacts() as $partner)
 
                           <option value="{{ $partner->id }}">{{ $partner->getCompleteName() }}</option>
