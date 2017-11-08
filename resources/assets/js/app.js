@@ -49,6 +49,6 @@ require('./contacts');
 require('select2');
 
 // jQuery-Tags-Input for the tags on the contact
+$(".select2").select2();
 $(document).ready(function() {
-    $(".select2").select2();
 } );

@@ -91,32 +91,45 @@
                 @foreach($contacts as $contact)
 
                 <li class="people-list-item">
-                  <a href="{{ route('people.show', $contact) }}">
-                    @if ($contact->has_avatar == 'true')
-                      <img src="{{ $contact->getAvatarURL(110) }}" width="43">
-                    @else
-                      @if (! is_null($contact->gravatar_url))
-                        <img src="{{ $contact->gravatar_url }}" width="43">
-                      @else
-                        @if (count($contact->getInitials()) == 1)
-                        <div class="avatar one-letter" style="background-color: {{ $contact->getAvatarColor() }};">
-                          {{ $contact->getInitials() }}
-                        </div>
+                  <div class="row">
+                    <div class="col-md-11">
+                      <a href="{{ route('people.show', $contact) }}">
+                        @if ($contact->has_avatar == 'true')
+                          <img src="{{ $contact->getAvatarURL(110) }}" width="43">
                         @else
-                        <div class="avatar" style="background-color: {{ $contact->getAvatarColor() }};">
-                          {{ $contact->getInitials() }}
-                        </div>
+                          @if (! is_null($contact->gravatar_url))
+                            <img src="{{ $contact->gravatar_url }}" width="43">
+                          @else
+                            @if (count($contact->getInitials()) == 1)
+                              <div class="avatar one-letter" style="background-color: {{ $contact->getAvatarColor() }};">
+                                {{ $contact->getInitials() }}
+                              </div>
+                            @else
+                              <div class="avatar" style="background-color: {{ $contact->getAvatarColor() }};">
+                                {{ $contact->getInitials() }}
+                              </div>
+                            @endif
+                          @endif
                         @endif
-                      @endif
-                    @endif
-                    <span class="people-list-item-name">
+                        <span class="people-list-item-name">
                       {{ $contact->getCompleteName(auth()->user()->name_order) }}
                     </span>
 
-                    <span class="people-list-item-information">
+                        <span class="people-list-item-information">
                       {{ trans('people.people_list_last_updated') }} {{ \App\Helpers\DateHelper::getShortDate($contact->updated_at) }}
                     </span>
-                  </a>
+                      </a>
+                    </div>
+                    <div class="col-md-1">
+                      <div class="pull-right">
+                        <a href="#" class="btn btn-warning btn-sm" onclick="if (confirm('Are you sure you want to delete this contact? Deletion is permanent.')) { $('#contact-delete-form-{{$contact->id}}').submit(); } return false;"> <i class="fa fa-trash"></i> </a>
+                        <form method="POST" action="{{ action('PeopleController@delete', $contact) }}" id="contact-delete-form-{{$contact->id}}" class="hidden">
+                          {{ method_field('DELETE') }}
+                          {{ csrf_field() }}
+                        </form>
+                      </div>
+                    </div>
+                  </div>
                 </li>
 
                 @endforeach

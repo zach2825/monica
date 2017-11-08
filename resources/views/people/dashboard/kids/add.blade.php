@@ -56,7 +56,8 @@
                 @include('people.dashboard.kids.form', [
                   'method' => 'POST',
                   'action' => route('people.kids.store', $contact),
-                  'buttonText' => trans('people.kids_add_cta')
+                  'buttonText' => trans('people.kids_add_cta'),
+                  'kid' => $contact,
                 ])
 
               </div>

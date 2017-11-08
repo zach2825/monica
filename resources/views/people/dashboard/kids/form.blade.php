@@ -7,7 +7,7 @@
     {{-- First name --}}
     <div class="form-group">
         <label for="first_name">{{ trans('people.kids_add_firstname') }}</label>
-        <input type="text" id="first_name" class="form-control" name="first_name" maxlength="254" value="{{ old('first_name') ?? $kid->first_name }}" autofocus required>
+        <input type="text" id="first_name" class="form-control" name="first_name" maxlength="254" value="{{ old('first_name') }}" autofocus required>
     </div>
 
     <div class="form-group">
@@ -24,12 +24,12 @@
         </label>
 
         <label class="form-check-inline" for="genderMale">
-            <input type="radio" class="form-check-input" name="gender" id="genderMale" value="male" @if(old('gender') === 'male' || $kid->gender === 'male') checked @endif>
+            <input type="radio" class="form-check-input" name="gender" id="genderMale" value="male" @if(old('gender') === 'male') checked @endif>
             {{ trans('people.kids_add_boy') }}
         </label>
 
         <label class="form-check-inline" for="genderFemale">
-            <input type="radio" class="form-check-input" name="gender" id="genderFemale" value="female" @if(old('gender') === 'female' || $kid->gender === 'female') checked @endif>
+            <input type="radio" class="form-check-input" name="gender" id="genderFemale" value="female" @if(old('gender') === 'female') checked @endif>
             {{ trans('people.kids_add_girl') }}
         </label>
     </fieldset>
@@ -91,7 +91,7 @@
     @if (\Route::currentRouteName() == 'people.kids.add')
         <fieldset class="form-group">
             <label class="form-check-inline real-contact-checkbox" for="realContact">
-                <input type="checkbox" class="form-check-input" name="realContact" id="realContact">
+                <input type="checkbox" class="form-check-input" name="realContact" id="realContact" checked>
                 {{ trans('people.kids_add_also_create') }}
                 <span class="help">{{ trans('people.kids_add_also_desc') }}</span>
             </label>

@@ -91,7 +91,7 @@
     @if (\Route::currentRouteName() == 'people.relationships.add' or (\Route::currentRouteName() == 'people.relationships.edit' and $partner->is_partial == 1))
     <fieldset class="form-group">
       <label class="form-check-inline real-contact-checkbox" for="realContact">
-        <input type="checkbox" class="form-check-input" name="realContact" id="realContact">
+        <input type="checkbox" class="form-check-input" name="realContact" id="realContact" checked>
         {{ trans('people.contact_add_also_create_contact') }}
         <span class="help">{{ trans('people.contact_add_add_description') }}</span>
       </label>
