@@ -6,7 +6,7 @@
  */
 
 require('./bootstrap');
-require('jQuery-Tags-Input/dist/jquery.tagsinput.min');
+require('jquery-tags-input/dist/jquery.tagsinput.min');
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
@@ -46,7 +46,9 @@ const app = new Vue({
 require('./tags');
 require('./search');
 require('./contacts');
+require('select2');
 
 // jQuery-Tags-Input for the tags on the contact
 $(document).ready(function() {
+    $(".select2").select2();
 } );
