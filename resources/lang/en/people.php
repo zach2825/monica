@@ -48,7 +48,7 @@ return [
     'section_personal_gifts' => 'Gifts',
 
     //
-    'link_to_list' => 'List of people',
+    'link_to_list' => 'Contacts',
 
     // Header
     'edit_contact_information' => 'Edit contact information',

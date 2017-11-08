@@ -36,12 +36,12 @@
 
             <ul class="nav nav-tabs" role="tablist">
               <li class="nav-item">
-                <a class="nav-link active" data-toggle="tab" href="#new" role="tab">
+                <a class="nav-link" data-toggle="tab" href="#new" role="tab">
                   {{ trans('people.significant_other_add_person') }}
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#existing" role="tab">
+                <a class="nav-link active" data-toggle="tab" href="#existing" role="tab">
                   {{ trans('people.significant_other_link_existing_contact') }}
                 </a>
               </li>
@@ -50,19 +50,20 @@
             <div class="tab-content">
 
               {{-- New contact entry --}}
-              <div class="tab-pane active" id="new" role="tabpanel">
+              <div class="tab-pane" id="new" role="tabpanel">
 
                 @include('people.relationship.form', [
                   'method' => 'POST',
                   'action' => route('people.relationships.store', $contact),
                   'actionExisting' => route('people.relationships.storeexisting', $contact),
-                  'buttonText' => trans('people.significant_other_add_cta')
+                  'buttonText' => trans('people.significant_other_add_cta'),
+                  'partner' => $contact,
                 ])
 
               </div>
 
               {{-- Existing contact entry --}}
-              <div class="tab-pane" id="existing" role="tabpanel">
+              <div class="tab-pane active" id="existing" role="tabpanel">
 
                 @if (count($contact->getPotentialContacts()) == 0)
 

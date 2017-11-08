@@ -7,7 +7,7 @@
     {{-- First name --}}
     <div class="form-group">
       <label for="first_name">{{ trans('people.significant_other_add_firstname') }}</label>
-      <input type="text" class="form-control" name="first_name" id="first_name" maxlength="254" value="{{ old('first_name') ?? $partner->first_name }}" autofocus required>
+      <input type="text" class="form-control" name="first_name" id="first_name" maxlength="254" value="{{ old('first_name', '') }}" autofocus required>
     </div>
 
     <div class="form-group">
@@ -24,12 +24,12 @@
       </label>
 
       <label class="form-check-inline" for="genderMale">
-        <input type="radio" class="form-check-input" name="gender" id="genderMale" value="male" @if(old('gender') === 'male' || $partner->gender === 'male') checked @endif>
+        <input type="radio" class="form-check-input" name="gender" id="genderMale" value="male" @if(old('gender') === 'male' || $partner->gender === 'female') checked @endif>
         {{ trans('app.gender_male') }}
       </label>
 
       <label class="form-check-inline" for="genderFemale">
-        <input type="radio" class="form-check-input" name="gender" id="genderFemale" value="female" @if(old('gender') === 'female' || $partner->gender === 'female') checked @endif>
+        <input type="radio" class="form-check-input" name="gender" id="genderFemale" value="female" @if(old('gender') === 'female' || $partner->gender === 'male') checked @endif>
         {{ trans('app.gender_female') }}
       </label>
     </fieldset>

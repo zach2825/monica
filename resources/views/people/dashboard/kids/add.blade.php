@@ -37,11 +37,11 @@
 
             <ul class="nav nav-tabs" role="tablist">
               <li class="nav-item">
-                <a class="nav-link active" data-toggle="tab" href="#new" role="tab">
+                <a class="nav-link" data-toggle="tab" href="#new" role="tab">
                   {{ trans('people.significant_other_add_person') }}
                 </a>
               </li>
-              <li class="nav-item">
+              <li class="nav-item active">
                 <a class="nav-link" data-toggle="tab" href="#existing" role="tab">
                   {{ trans('people.significant_other_link_existing_contact') }}
                 </a>
@@ -51,7 +51,7 @@
             <div class="tab-content">
 
               {{-- New contact entry --}}
-              <div class="tab-pane active" id="new" role="tabpanel">
+              <div class="tab-pane" id="new" role="tabpanel">
 
                 @include('people.dashboard.kids.form', [
                   'method' => 'POST',
@@ -62,7 +62,7 @@
               </div>
 
               {{-- Existing contact entry --}}
-              <div class="tab-pane" id="existing" role="tabpanel">
+              <div class="tab-pane active" id="existing" role="tabpanel">
 
                 @if (count($contact->getPotentialContacts()) == 0)
 
