@@ -13,7 +13,7 @@
         @if (is_null($contact->birthdate))
           {{ trans('people.birthdate_not_set') }}
         @else
-          {{ $contact->getAge() }}
+          {{$contact->birthdate->format('m/d/Y')}} ({{ $contact->getAge() }})
         @endif
       </li>
 

@@ -322,6 +322,9 @@ return [
     'debt_edit_update_cta' => 'Update debt',
     'debt_edit_success' => 'The debt has been updated successfully',
     'debts_blank_title' => 'Manage debts you owe to :name or :name owes you',
+    'debt_status' => 'Debt Paid',
+    'inprogress' => 'In progress',
+    'paid' => 'Paid',
 
     // tags
     'tag_edit' => 'Edit tag',

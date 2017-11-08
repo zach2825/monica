@@ -29,6 +29,16 @@
           {{ \App\Helpers\DateHelper::getShortDate($debt->created_at) }}
         </div>
         <div class="table-cell debt-nature">
+          @if($debt->status == 'paid')
+            <span class="text text-success">
+              <i class="fa fa-check" title="paid"></i>
+            </span>
+          @else
+            <span class="text text-danger">
+              <i class="fa fa-times"></i>
+            </span>
+          @endif
+
           @if ($debt->in_debt == 'yes')
             {{ trans('people.debt_you_owe', [
                 'amount' => App\Helpers\MoneyHelper::format($debt->amount)

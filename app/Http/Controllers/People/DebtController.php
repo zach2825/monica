@@ -102,10 +102,10 @@ class DebtController extends Controller
                 'in_debt',
                 'amount',
                 'reason',
+                'status',
             ])
             + [
-                'account_id' => $contact->account_id,
-                'status' => 'inprogress',
+                'account_id' => $contact->account_id
             ]
         );
 

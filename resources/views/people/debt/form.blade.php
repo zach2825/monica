@@ -31,6 +31,17 @@
         <textarea class="form-control" name="reason" id="reason" maxlength="2500">{{ old('reason') ?? $debt->reason }}</textarea>
     </div>
 
+    {{-- Paid --}}
+    <input type="hidden" name="status" value="inprogress" id="status-default" />
+    <div class="form-group">
+        <div class="form-check">
+            <label class="form-check-label" for="status">
+                <input type="checkbox" name="status" id="status" value="paid" @if(old('status') == 'paid' || $debt->status == 'paid') checked @endif  />
+                {{ trans('people.debt_status') }}
+            </label>
+        </div>
+    </div>
+
     <div class="form-group actions">
         <button type="submit" class="btn btn-primary">{{ trans('people.debt_add_add_cta') }}</button>
         <a href="{{ route('people.show', $contact) }}" class="btn btn-secondary">{{ trans('app.cancel') }}</a>
