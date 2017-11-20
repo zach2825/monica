@@ -32,6 +32,9 @@ class MoneyHelper
                 case 'BRL':
                     $amount = number_format($amount, 2, ',', '.');
                     break;
+                case 'USD':
+                    $amount = number_format($amount, 2);
+                    break;
             }
 
             $amount = $currency->symbol.$amount;
