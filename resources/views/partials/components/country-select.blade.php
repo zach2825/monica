@@ -1,4 +1,4 @@
-<select name="country" class="form-control" required>
+<select name="country" class="form-control select2" required>
   <option value="---" selected>---</option>
   @foreach ( $countries as $country )
     @if ($country->id == $selectionID)
