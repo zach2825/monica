@@ -1,4 +1,4 @@
-<div class="col-xs-12 section-title">
+<div class="col-xs-12 section-title" id="activities">
   <img src="/img/people/activities.svg" class="icon-section icon-activities">
   <h3>
     {{ trans('people.section_personal_activities') }}

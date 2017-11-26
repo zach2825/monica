@@ -108,6 +108,7 @@
                   @endif
                 </div>
 
+                @if($number_of_tasks > 0)
                 {{-- TASKS --}}
                 <div class="tasks dashboard-section">
                   <img src="/img/people/tasks.svg" class="section-icon">
@@ -127,13 +128,14 @@
                   <p>{{ trans('dashboard.tasks_blank') }}</p>
                   @endif
                 </div>
+                @endif
 
+                @if ($debts->count() != 0)
                 {{-- DEBTS --}}
                 <div class="debts dashboard-section">
                   <img src="/img/people/debt/bill.svg" class="section-icon">
                   <h3>{{ trans('dashboard.section_debts') }}</h3>
 
-                  @if ($debts->count() != 0)
                     @foreach ($debts as $debt)
                     <div class="dashboard-item">
                       <div class="truncate">
@@ -155,13 +157,10 @@
                       </div>
                     </div>
                     @endforeach
-                  @else
-
-                  <p>{{ trans('dashboard.debts_blank') }}</p>
-
-                  @endif
                 </div>
+                @endif
               </div>
+
               <div class="tab-pane" id="actions" role="tabpanel">
                 <h3>{{ trans('dashboard.event_title') }}</h3>
                 <ul class="event-list">

@@ -29,6 +29,11 @@
   </head>
   <body data-account-id={{ auth()->user()->account_id }}>
 
+    <button {{-- onclick a scroll to top function is triggered --}} class="btn btn-xs btn-primary" id="scrollUp" title="Go to top">
+      <i class="fa fa-arrow-up"></i>
+      <span class="hidden-xs">Top</span>
+    </button>
+
     @include('partials.header')
 
     <div id="app">

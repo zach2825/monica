@@ -330,6 +330,7 @@ return [
     'tag_edit' => 'Edit tag',
 
     // Introductions
+    'quick_nav' => 'Quick Nav',
     'introductions_sidebar_title' => 'How you met',
     'introductions_blank_cta' => 'Indicate how you met :name',
     'introductions_title_edit' => 'How did you meet :name?',

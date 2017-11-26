@@ -1,3 +1,6 @@
+{{-- Quick navigation for mobile --}}
+@include('people.dashboard.quick-nav')
+
 {{-- Significant Other --}}
 @include('people.relationship.index')
 
