@@ -92,9 +92,11 @@
               <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#actions" role="tab">{{ trans('dashboard.tab_lastest_actions') }}</a>
               </li>
+              @if($holiday_contacts)
               <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#holiday" role="tab">{{ trans('dashboard.tab_holiday') }}</a>
               </li>
+              @endif
             </ul>
 
             <!-- Tab panes -->
