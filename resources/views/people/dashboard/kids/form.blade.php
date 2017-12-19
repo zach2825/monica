@@ -84,7 +84,7 @@
     </div>
 
 
-      <pclass="help">{{ trans('people.information_edit_help') }}</p>
+      <p class="help">{{ trans('people.information_edit_help') }}</p>
 
   </fieldset>
 

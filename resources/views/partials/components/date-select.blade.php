@@ -1,12 +1,11 @@
 {{-- Data comes from DateSelectViewComposer --}}
+<?php if(!isset($class)){ $class = ''; } ?>
 
 <div class="mt2">
 
   <select id="{{ $class }}_month" name="{{ $class }}_month" class="mr2">
     @foreach($months as $month => $value)
-      <option value="{{ $month + 1 }}"
-        {{ ($specialDate == null) ? '' : (($specialDate->date->month == ($month + 1)) ? 'selected="selected"': '') }}
-      >
+      <option value="{{ $month + 1 }}"{{ ($specialDate == null) ? '' : (($specialDate->date->month == ($month + 1)) ? 'selected="selected"': '') }}>
         {{ $value }}
       </option>
     @endforeach
@@ -14,9 +13,7 @@
 
   <select id="{{ $class }}_day" name="{{ $class }}_day" class="mr2">
     @for ($day=1 ; $day < 32 ; $day++)
-    <option value="{{ $day }}"
-      {{ ($specialDate == null) ? '' : (($specialDate->date->day == $day) ? 'selected="selected"': '') }}
-    >
+    <option value="{{ $day }}"{{ ($specialDate == null) ? '' : (($specialDate->date->day == $day) ? 'selected="selected"': '') }}>
       {{ $day }}
     </option>
     @endfor
