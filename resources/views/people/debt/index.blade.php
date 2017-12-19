@@ -13,7 +13,7 @@
 
   <div class="col-xs-12">
     <div class="section-blank">
-      <h3>{{ trans('people.debts_blank_title', ['name' => $contact->getFirstName()]) }}</h3>
+      <h3>{{ trans('people.debts_blank_title', ['name' => $contact->first_name]) }}</h3>
       <a href="/people/{{ $contact->id }}/debt/add">{{ trans('people.debt_add_cta') }}</a>
     </div>
   </div>
@@ -45,7 +45,7 @@
             ]) }}
           @else
             {{ trans('people.debt_they_owe', [
-                'name' => $contact->getFirstName(),
+                'name' => $contact->first_name,
                 'amount' => App\Helpers\MoneyHelper::format($debt->amount)
             ]) }}
           @endif
@@ -76,7 +76,7 @@
           <strong>
             @if ($contact->isOwedMoney())
               {{ trans('people.debt_they_owe', [
-                  'name' => $contact->getFirstName(),
+                  'name' => $contact->first_name,
                   'amount' => App\Helpers\MoneyHelper::format($contact->totalOutstandingDebtAmount())
               ]) }}
             @else
