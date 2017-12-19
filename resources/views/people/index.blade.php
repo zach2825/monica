@@ -123,7 +123,7 @@
                     <div class="col-md-1">
                       <div class="pull-right">
                         <a href="#" class="btn btn-warning btn-sm" onclick="if (confirm('Are you sure you want to delete this contact? Deletion is permanent.')) { $('#contact-delete-form-{{$contact->id}}').submit(); } return false;"> <i class="fa fa-trash"></i> </a>
-                        <form method="POST" action="{{ action('PeopleController@delete', $contact) }}" id="contact-delete-form-{{$contact->id}}" class="hidden">
+                        <form method="POST" action="{{ action('ContactsController@delete', $contact) }}" id="contact-delete-form-{{$contact->id}}" class="hidden">
                           {{ method_field('DELETE') }}
                           {{ csrf_field() }}
                         </form>
