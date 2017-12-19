@@ -14,6 +14,9 @@
           'csrfToken' => csrf_token(),
       ]); ?>
     </script>
+
+    <!-- The script below puts all the translation keys in a JS file so we
+    can reuse it in Vue.js files -->
     <script>
       window.trans = <?php
       // copy all translations from /resources/lang/CURRENT_LOCALE/* to global JS variable
@@ -28,11 +31,6 @@
     </script>
   </head>
   <body data-account-id={{ auth()->user()->account_id }}>
-
-    <button {{-- onclick a scroll to top function is triggered --}} class="btn btn-xs btn-primary" id="scrollUp" title="Go to top">
-      <i class="fa fa-arrow-up"></i>
-      <span class="hidden-xs">Top</span>
-    </button>
 
     @include('partials.header')
 

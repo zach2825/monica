@@ -11,6 +11,7 @@ return [
     'close' => 'Close',
     'remove' => 'Remove',
     'done' => 'Done',
+    'for' => 'for',
 
     'markdown_description' => 'Want to format your text in a nice way? We support Markdown to add bold, italic, lists and more.',
     'markdown_link' => 'Read documentation',
@@ -39,7 +40,7 @@ return [
     'footer_modal_version_release_away' => 'You are 1 release behind the latest version available. You should update your instance.|You are :number releases behind the latest version available. You should update your instance.',
 
     'breadcrumb_dashboard' => 'Dashboard',
-    'breadcrumb_list_contacts' => 'Contacts',
+    'breadcrumb_list_contacts' => 'List of people',
     'breadcrumb_journal' => 'Journal',
     'breadcrumb_settings' => 'Settings',
     'breadcrumb_settings_export' => 'Export',

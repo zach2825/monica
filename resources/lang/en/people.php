@@ -48,7 +48,7 @@ return [
     'section_personal_gifts' => 'Gifts',
 
     //
-    'link_to_list' => 'Contacts',
+    'link_to_list' => 'List of people',
 
     // Header
     'edit_contact_information' => 'Edit contact information',
@@ -87,25 +87,11 @@ return [
     'information_edit_max_size' => 'Max :size Mb.',
     'information_edit_firstname' => 'First name',
     'information_edit_lastname' => 'Last name (Optional)',
-    'information_edit_facebook' => 'Facebook profile (optional)',
-    'information_edit_twitter' => 'Twitter profile (optional)',
     'information_edit_linkedin' => 'LinkedIn profile (optional)',
-    'information_edit_street' => 'Street (optional)',
-    'information_edit_province' => 'Province (optional)',
-    'information_edit_postalcode' => 'Postal code (optional)',
-    'information_edit_city' => 'City (optional)',
-    'information_edit_country' => 'Country (optional)',
-    'information_edit_email' => 'Email address (optional)',
-    'information_edit_phone' => 'Phone number (optional)',
     'information_edit_probably' => 'This person is probably',
     'information_edit_probably_yo' => 'years old',
     'information_edit_exact' => 'I know the exact birthdate of this person, which is',
     'information_edit_help' => 'If you indicate an exact birthdate for this person, we will create a new reminder for you - so you\'ll be notified every year when it\'s time to celebrate this person\'s birthdate.',
-    'information_no_address_defined' => 'No address defined',
-    'information_no_email_defined' => 'No email address defined',
-    'information_no_phone_defined' => 'No phone number defined',
-    'information_no_facebook_defined' => 'No Facebook defined',
-    'information_no_twitter_defined' => 'No Twitter defined',
     'information_no_linkedin_defined' => 'No LinkedIn defined',
     'information_no_work_defined' => 'No work information defined',
     'information_work_at' => 'at :company',
@@ -209,20 +195,10 @@ return [
     'kids_unlink_confirmation' => 'Are you sure you want to delete this relationship? This kid will not be deleted - only the relationship between the two.',
 
     // tasks
-    'tasks_desc' => 'Keep tracks of things you need to do for :name',
-    'tasks_blank_title' => 'It looks like you don\'t have any tasks about :name yet',
-    'tasks_blank_add_activity' => 'Add task',
-    'tasks_add_title_page' => 'Add a new task for :name',
-    'tasks_add_title' => 'What is the task you want to be reminded of?',
-    'tasks_add_optional_comment' => 'Comment (optional)',
-    'tasks_add_cta' => 'Add task',
-    'tasks_add_success' => 'The task has been added successfully',
-    'tasks_delete' => 'Delete',
-    'tasks_reactivate' => 'Reactivate',
-    'tasks_mark_complete' => 'Mark as complete',
+    'tasks_blank_title' => 'You don\'t have any tasks yet.',
+    'tasks_form_title' => 'Title',
+    'tasks_form_description' => 'Description (optional)',
     'tasks_add_task' => 'Add a task',
-    'tasks_added_on' => 'added on :date',
-    'tasks_delete_confirmation' => 'Are you sure you want to delete this task?',
     'tasks_delete_success' => 'The task has been deleted successfully',
     'tasks_complete_success' => 'The task has changed status successfully',
 
@@ -268,15 +244,9 @@ return [
     'notes_create_success' => 'The note has been created successfully',
     'notes_update_success' => 'The note has been saved successfully',
     'notes_delete_success' => 'The note has been deleted successfully',
-    'notes_add_title' => 'Add a note about :name',
     'notes_add_cta' => 'Add note',
-    'notes_edit_title' => 'Edit note about :name',
-    'notes_edit_cta' => 'Save note',
-    'notes_written_on' => 'Written on :date',
-    'notes_add_one_more' => 'Add another note',
-    'notes_title' => 'Notes',
-    'notes_blank_link' => 'Add a note',
-    'notes_blank_name' => 'about :name',
+    'notes_favorite' => 'Add/remove from favorites',
+    'notes_delete_title' => 'Delete a note',
     'notes_delete_confirmation' => 'Are you sure you want to delete this note? Deletion is permanent',
 
     // gifts
@@ -322,15 +292,11 @@ return [
     'debt_edit_update_cta' => 'Update debt',
     'debt_edit_success' => 'The debt has been updated successfully',
     'debts_blank_title' => 'Manage debts you owe to :name or :name owes you',
-    'debt_status' => 'Debt Paid',
-    'inprogress' => 'In progress',
-    'paid' => 'Paid',
 
     // tags
     'tag_edit' => 'Edit tag',
 
     // Introductions
-    'quick_nav' => 'Quick Nav',
     'introductions_sidebar_title' => 'How you met',
     'introductions_blank_cta' => 'Indicate how you met :name',
     'introductions_title_edit' => 'How did you meet :name?',
@@ -369,9 +335,4 @@ return [
     'contact_address_form_province' => 'Province (optional)',
     'contact_address_form_postal_code' => 'Postal code (optional)',
     'contact_address_form_country' => 'Country (optional)',
-    'contact_address_form_' => '',
-    'contact_address_form_' => '',
-    'contact_address_form_' => '',
-    'contact_address_form_' => '',
-    'contact_address_form_' => '',
 ];

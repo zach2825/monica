@@ -65,12 +65,17 @@
                 <a class="nav-link active" data-toggle="tab" href="#coming" role="tab">{{ trans('dashboard.tab_whats_coming') }}</a>
               </li>
               <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#notes" role="tab">{{ trans('dashboard.tab_important_notes') }}</a>
+              </li>
+              <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#actions" role="tab">{{ trans('dashboard.tab_lastest_actions') }}</a>
               </li>
             </ul>
 
             <!-- Tab panes -->
             <div class="tab-content">
+
+              <!-- incoming -->
               <div class="tab-pane active" id="coming" role="tabpanel">
 
                 {{-- REMINDERS --}}
@@ -119,8 +124,8 @@
                     <div class="dashboard-item">
                       <div class="truncate">
                         <a href="/people/{{ $task->contact_id }}">{{ App\Contact::find($task->contact_id)->getCompleteName(auth()->user()->name_order) }}</a>:
-                        {{ $task->getTitle() }}
-                        {{ $task->getDescription() }}
+                        {{ $task->title }}
+                        {{ $task->description }}
                       </div>
                     </div>
                     @endforeach
@@ -136,6 +141,7 @@
                   <img src="/img/people/debt/bill.svg" class="section-icon">
                   <h3>{{ trans('dashboard.section_debts') }}</h3>
 
+                  @if ($debts->count() != 0)
                     @foreach ($debts as $debt)
                     <div class="dashboard-item">
                       <div class="truncate">
@@ -148,7 +154,7 @@
                         <span class="debt-description">{{ trans('dashboard.debts_you_due') }}</span>
                         @endif
 
-                        {{App\Helpers\MoneyHelper::format($debt->amount) }}
+                          {{App\Helpers\MoneyHelper::format($debt->amount) }}
 
                         @if (! is_null($debt->reason))
                         <span class="debt-description">{{ trans('dashboard.debts_for') }}</span>
@@ -157,10 +163,76 @@
                       </div>
                     </div>
                     @endforeach
+                  @else
+
+                  <p>{{ trans('dashboard.debts_blank') }}</p>
+
+                  @endif
                 </div>
-                @endif
+
+                <div class="dashboard-box dashboard-stat mt4">
+                  <h2>{{ trans('dashboard.statistics_title') }}</h2>
+                  <ul class="horizontal">
+                    <li>
+                      <span class="stat-number">{{ $number_of_contacts }}</span>
+                      <span class="stat-description">{{ trans('dashboard.statistics_contacts') }}</span>
+                    </li>
+                    <li>
+                      <span class="stat-number">{{ $number_of_reminders }}</span>
+                      <span class="stat-description">{{ trans('dashboard.statistics_reminders') }}</span>
+                    </li>
+                    <li>
+                      <span class="stat-number">{{ $number_of_notes }}</span>
+                      <span class="stat-description">{{ trans('dashboard.statistics_notes') }}</span>
+                    </li>
+                    <li>
+                      <span class="stat-number">{{ $number_of_activities }}</span>
+                      <span class="stat-description">{{ trans('dashboard.statistics_activities') }}</span>
+                    </li>
+                    <li>
+                      <span class="stat-number">{{ $number_of_gifts }}</span>
+                      <span class="stat-description">{{ trans('dashboard.statistics_gifts') }}</span>
+                    </li>
+                    <li>
+                      <span class="stat-number">{{ $number_of_tasks }}</span>
+                      <span class="stat-description">{{ trans('dashboard.statistics_tasks') }}</span>
+                    </li>
+                    <li>
+                      <span class="stat-number">{{ MoneyHelper::format($debt_owed) }}</span>
+                      <span class="stat-description">{{ trans('dashboard.statistics_deb_owed') }}</span>
+                    </li>
+                    <li>
+                      <span class="stat-number">{{ MoneyHelper::format($debt_due) }}</span>
+                      <span class="stat-description">{{ trans('dashboard.statistics_debt_due') }}</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
 
+              <!-- Notes -->
+              <div class="tab-pane" id="notes" role="tabpanel">
+                @if ($notes->count() == 0)
+                  @include('dashboard.blank_notes')
+                @endif
+
+                @foreach($notes as $note)
+                  <div class="ba br2 b--black-10 br--top w-100 mb2">
+                    <div class="pa2">
+                      {{ $note->body }}
+                    </div>
+                    <div class="pa2 cf bt b--black-10 br--bottom f7 lh-copy">
+                      <div class="fl w-50">
+                        <div class="f7 di mr1">
+                          {{ trans('app.for') }} <a href="/people/{{ $note->contact->id }}">{{ $note->contact->getCompleteName() }}</a>
+                        </div>
+                        {{ $note->created_at }}
+                      </div>
+                    </div>
+                  </div>
+                @endforeach
+              </div>
+
+              <!-- Actions -->
               <div class="tab-pane" id="actions" role="tabpanel">
                 <h3>{{ trans('dashboard.event_title') }}</h3>
                 <ul class="event-list">

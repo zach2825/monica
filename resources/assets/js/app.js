@@ -6,7 +6,7 @@
  */
 
 require('./bootstrap');
-require('jquery-tags-input/dist/jquery.tagsinput.min');
+require('jQuery-Tags-Input/dist/jquery.tagsinput.min');
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
@@ -16,6 +16,17 @@ require('jquery-tags-input/dist/jquery.tagsinput.min');
 
 //Vue.component('example', require('./components/people/dashboard/kids.vue'));
 const Vue = require('vue');
+
+// Notifications
+import Notifications from 'vue-notification';
+Vue.use(Notifications);
+
+// Tooltip
+import Tooltip from 'vue-directive-tooltip';
+import 'vue-directive-tooltip/css/index.css';
+Vue.use(Tooltip);
+
+// Custom components
 Vue.component(
     'passport-clients',
     require('./components/passport/Clients.vue')
@@ -40,6 +51,16 @@ Vue.component(
 Vue.component(
     'contact-information',
     require('./components/people/ContactInformation.vue')
+);
+
+Vue.component(
+    'contact-task',
+    require('./components/people/Tasks.vue')
+);
+
+Vue.component(
+    'contact-note',
+    require('./components/people/Notes.vue')
 );
 
 // Settings
@@ -70,27 +91,7 @@ const app = new Vue({
 require('./tags');
 require('./search');
 require('./contacts');
-require('select2');
 
 // jQuery-Tags-Input for the tags on the contact
-$(".select2").select2();
-
-// When the user scrolls down 20px from the top of the document, show the button
-window.onscroll = function() {scrollFunction()};
-
-function scrollFunction() {
-    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-        document.getElementById("scrollUp").style.display = "block";
-    } else {
-        document.getElementById("scrollUp").style.display = "none";
-    }
-}
-
 $(document).ready(function() {
-
-    // When the user clicks on the button, scroll to the top of the document
-    $("#scrollUp").click(function(){
-        document.body.scrollTop = 0;
-        document.documentElement.scrollTop = 0;
-    })
 } );
