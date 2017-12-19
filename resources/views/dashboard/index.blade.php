@@ -1,5 +1,27 @@
 @extends('layouts.skeleton')
 
+@push('scripts')
+  <script type="text/javascript">
+    $(function(){
+        $('.select-clicked').click(function(){
+
+            var textarea = document.createElement("textarea");
+            textarea.id='tmpclipboard';
+            textarea.value = $(this).text().trim();
+
+            $("body").append(textarea);
+            textarea.select();
+            document.execCommand("Copy");
+
+            $("#tmpclipboard").remove();
+
+            $(this).append('<div class="copied">Copied</din>');
+            $(this).find('.copied').fadeOut('slow');
+        });
+    });
+  </script>
+@endpush
+
 @section('content')
   <div class="dashboard">
 
@@ -69,6 +91,9 @@
               </li>
               <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#actions" role="tab">{{ trans('dashboard.tab_lastest_actions') }}</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#holiday" role="tab">{{ trans('dashboard.tab_holiday') }}</a>
               </li>
             </ul>
 
@@ -232,6 +257,31 @@
                   </div>
                 @endforeach
               </div>
+
+              <!-- Holiday -->
+              @if($holiday_contacts)
+              <div class="tab-pane" id="holiday" role="tabpanel">
+                <ul class="event-list">
+                  @foreach($holiday_contacts as $holiday_contact)
+                    <li class="event-list-item">
+                      <i class="fa fa-tree"></i>
+
+                      {{-- Name --}}
+                      <p>{{$holiday_contact->name}}</p>
+
+                      {{-- Address --}}
+                      <small>
+                        Click the address to copy:
+                      </small>
+                      <div class="select-clicked">
+                        {!! array_get($holiday_contact, 'address.full_address', '') !!}
+                      </div>
+                      <div class="copied hidden"><i class="fa fa-check"></i></div>
+                    </li>
+                  @endforeach
+                </ul>
+              </div>
+              @endif
 
               <!-- Actions -->
               <div class="tab-pane" id="actions" role="tabpanel">

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Contact;
 use DB;
 use Auth;
 use App\Tag;
@@ -154,6 +155,17 @@ class SettingsController extends Controller
     public function export()
     {
         return view('settings.export');
+    }
+
+    /**
+     * @param Contact $contact
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function needsCard(Contact $contact)
+    {
+        $test = $contact->update(['needs_card' => !$contact->needs_card]);
+
+        return redirect()->back();
     }
 
     /**

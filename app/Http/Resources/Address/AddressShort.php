@@ -13,7 +13,7 @@ class AddressShort extends Resource
      * @param  \Illuminate\Http\Request
      * @return array
      */
-    public function toArray($request)
+    public function toArray($request=null)
     {
         return [
             'id' => $this->id,

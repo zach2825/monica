@@ -335,4 +335,7 @@ return [
     'contact_address_form_province' => 'Province (optional)',
     'contact_address_form_postal_code' => 'Postal code (optional)',
     'contact_address_form_country' => 'Country (optional)',
+
+    // Holiday
+    'needs_card' => 'Needs Card',
 ];

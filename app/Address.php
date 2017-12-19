@@ -105,6 +105,11 @@ class Address extends Model
         return $address;
     }
 
+    public function getFullAddressAttribute()
+    {
+        return $this->getFullAddress();
+    }
+
     /**
      * Get the country of the contact.
      *

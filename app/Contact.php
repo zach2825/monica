@@ -15,6 +15,9 @@ use App\Http\Resources\Contact\PartnerShort as PartnerShortResource;
 use App\Http\Resources\Contact\OffspringShort as OffspringShortResource;
 use App\Http\Resources\Contact\ProgenitorShort as ProgenitorShortResource;
 
+/**
+ * @property mixed needs_card
+ */
 class Contact extends Model
 {
     use Searchable;
@@ -68,6 +71,7 @@ class Contact extends Model
         'avatar_external_url',
         'last_consulted_at',
         'created_at',
+        'needs_card',
     ];
 
     /**
@@ -262,7 +266,12 @@ class Contact extends Model
      */
     public function addresses()
     {
-        return $this->hasMany('App\Address');
+        return $this->hasMany(Address::class);
+    }
+
+    public function getAddressAttribute()
+    {
+        return $this->addresses()->first();
     }
 
     /**
@@ -367,6 +376,11 @@ class Contact extends Model
     public function getLastNameAttribute($value)
     {
         return $value;
+    }
+
+    public function getNameAttribute()
+    {
+        return $this->attributes['name'] = $this->first_name . ' ' . $this->last_name;
     }
 
     /**

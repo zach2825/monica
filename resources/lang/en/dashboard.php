@@ -36,6 +36,7 @@ return [
     'tab_last_edited_contacts' => 'Last edited contacts',
     'tab_whats_coming' => 'What\'s coming',
     'tab_lastest_actions' => 'Latest actions',
+    'tab_holiday' => 'Holiday contacts',
     'tab_important_notes' => 'Important notes',
     'tasks_title' => 'Tasks',
     'tasks_blank' => 'No tasks are planned.',

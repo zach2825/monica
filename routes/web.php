@@ -186,6 +186,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::delete('/settings/users/{user}', ['as' => '.users.delete', 'uses' => 'SettingsController@deleteAdditionalUser']);
         Route::post('/settings/users/save', 'SettingsController@inviteUser')->name('.users.save');
         Route::delete('/settings/users/invitations/{invitation}', 'SettingsController@destroyInvitation');
+        Route::get('/settings/needs-card/{contact}', ['as' => '.users.needs_card', 'uses' => 'SettingsController@needsCard']);
 
         Route::get('/settings/subscriptions', 'Settings\\SubscriptionsController@index')->name('.subscriptions.index');
         Route::get('/settings/subscriptions/upgrade', 'Settings\\SubscriptionsController@upgrade')->name('.subscriptions.upgrade');

@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Auth;
 use App\Debt;
 use App\Event;
-use App\Contact;
-use Carbon\Carbon;
 use App\Helpers\DateHelper;
+use Auth;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -75,22 +74,28 @@ class DashboardController extends Controller
         // Active tasks
         $tasks = $account->tasks()->with('contact')->where('completed', 0)->get();
 
+        $holiday_contacts = [];
+        if(date('m') == '12') {
+            $holiday_contacts = $account->contacts()->where('needs_card', true)->get();
+        }
+
         $data = [
-            'events' => $events,
-            'lastUpdatedContacts' => $lastUpdatedContacts,
-            'upcomingReminders' => $upcomingReminders,
-            'number_of_contacts' => $account->contacts_count,
-            'number_of_reminders' => $account->reminders_count,
-            'number_of_notes' => $account->notes_count,
+            'events'               => $events,
+            'lastUpdatedContacts'  => $lastUpdatedContacts,
+            'upcomingReminders'    => $upcomingReminders,
+            'number_of_contacts'   => $account->contacts_count,
+            'number_of_reminders'  => $account->reminders_count,
+            'number_of_notes'      => $account->notes_count,
             'number_of_activities' => $account->activities_count,
-            'number_of_gifts' => $account->gifts_count,
-            'number_of_tasks' => $account->tasks_count,
-            'debt_due' => $debt_due,
-            'debt_owed' => $debt_owed,
-            'tasks' => $tasks,
-            'debts' => $debt,
-            'user' => auth()->user(),
-            'notes' => $notes,
+            'number_of_gifts'      => $account->gifts_count,
+            'number_of_tasks'      => $account->tasks_count,
+            'debt_due'             => $debt_due,
+            'debt_owed'            => $debt_owed,
+            'tasks'                => $tasks,
+            'debts'                => $debt,
+            'user'                 => auth()->user(),
+            'notes'                => $notes,
+            'holiday_contacts'     => $holiday_contacts,
         ];
 
         return view('dashboard.index', $data);
