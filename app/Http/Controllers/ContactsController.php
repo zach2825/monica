@@ -7,8 +7,11 @@ use Auth;
 use App\Tag;
 use Validator;
 use App\Contact;
+use App\ContactFieldType;
 use App\Jobs\ResizeAvatars;
+use App\Helpers\VCardHelper;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Storage;
 
 class ContactsController extends Controller
@@ -28,27 +31,77 @@ class ContactsController extends Controller
             $user->updateContactViewPreference($sort);
         }
 
-        $tag = null;
+        $date_flag = false;
+        $date_sort = null;
 
-        if ($request->get('tags')) {
-            $tag = Tag::where('name_slug', $request->get('tags'))
+        if (str_contains($sort, 'lastactivitydate')) {
+            $date_sort = str_after($sort, 'lastactivitydate');
+            $sort = 'firstnameAZ';
+            $date_flag = true;
+        }
+
+        $tags = null;
+        $url = '';
+        $tagCount = 1;
+
+        if ($request->get('tag1')) {
+            $tags = Tag::where('name_slug', $request->get('tag1'))
                         ->where('account_id', auth()->user()->account_id)
-                        ->first();
+                        ->get();
 
-            if (is_null($tag)) {
+            $count = 2;
+
+            while (true) {
+                if ($request->get('tag'.$count)) {
+                    $tags = $tags->concat(
+                        Tag::where('name_slug', $request->get('tag'.$count))
+                                    ->where('account_id', auth()->user()->account_id)
+                                    ->get()
+                    );
+                } else {
+                    break;
+                }
+
+                $count++;
+            }
+            if (is_null($tags)) {
                 return redirect()->route('people.index');
             }
 
-            $contacts = $user->account->contacts()->real()->whereHas('tags', function ($query) use ($tag) {
-                $query->where('id', $tag->id);
-            })->sortedBy($sort)->get();
+            $contacts = $user->account->contacts()->real()->sortedBy($sort);
+
+            foreach ($tags as $tag) {
+                $contacts = $contacts->whereHas('tags', function ($query) use ($tag) {
+                    $query->where('id', $tag->id);
+                });
+
+                $url = $url.'tag'.$tagCount.'='.$tag->name_slug.'&';
+
+                $tagCount++;
+            }
+
+            $contacts = $contacts->get();
         } else {
             $contacts = $user->account->contacts()->real()->sortedBy($sort)->get();
         }
 
+        if ($date_flag) {
+            foreach ($contacts as $contact) {
+                $contact['sort_date'] = $contact->getLastActivityDate();
+            }
+
+            if ($date_sort == 'NewtoOld') {
+                $contacts = $contacts->sortByDesc('sort_date');
+            } elseif ($date_sort == 'OldtoNew') {
+                $contacts = $contacts->sortBy('sort_date');
+            }
+        }
+
         return view('people.index')
             ->withContacts($contacts)
-            ->withTag($tag);
+            ->withTags($tags)
+            ->withUrl($url)
+            ->withTagCount($tagCount);
     }
 
     /**
@@ -58,7 +111,16 @@ class ContactsController extends Controller
      */
     public function create()
     {
-        return view('people.create');
+        $data = [
+            'genders' => auth()->user()->account->genders,
+        ];
+
+        return view('people.create', $data);
+    }
+
+    public function missing()
+    {
+        return view('people.missing');
     }
 
     /**
@@ -72,7 +134,7 @@ class ContactsController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|max:50',
             'last_name' => 'nullable|max:100',
-            'gender' => 'required',
+            'gender' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
@@ -83,7 +145,7 @@ class ContactsController extends Controller
 
         $contact = new Contact;
         $contact->account_id = Auth::user()->account_id;
-        $contact->gender = $request->input('gender');
+        $contact->gender_id = $request->input('gender');
 
         $contact->first_name = $request->input('first_name');
         $contact->last_name = $request->input('last_name', null);
@@ -139,8 +201,21 @@ class ContactsController extends Controller
      */
     public function edit(Contact $contact)
     {
+        $age = (string) (! is_null($contact->birthdate) ? $contact->birthdate->getAge() : 0);
+        $birthdate = ! is_null($contact->birthdate) ? $contact->birthdate->date->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
+        $day = ! is_null($contact->birthdate) ? $contact->birthdate->date->day : \Carbon\Carbon::now()->day;
+        $month = ! is_null($contact->birthdate) ? $contact->birthdate->date->month : \Carbon\Carbon::now()->month;
+
         return view('people.edit')
-            ->withContact($contact);
+            ->withContact($contact)
+            ->withDays(\App\Helpers\DateHelper::getListOfDays())
+            ->withMonths(\App\Helpers\DateHelper::getListOfMonths())
+            ->withBirthdayState($contact->getBirthdayState())
+            ->withBirthdate($birthdate)
+            ->withDay($day)
+            ->withMonth($month)
+            ->withAge($age)
+            ->withGenders(auth()->user()->account->genders);
     }
 
     /**
@@ -157,6 +232,7 @@ class ContactsController extends Controller
             'lastname' => 'max:100',
             'gender' => 'required',
             'file' => 'max:10240',
+            'birthdate' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -165,9 +241,13 @@ class ContactsController extends Controller
                 ->withErrors($validator);
         }
 
-        $contact->gender = $request->input('gender');
-        $contact->first_name = $request->input('firstname');
-        $contact->last_name = $request->input('lastname');
+        if (! $contact->setName($request->input('firstname'), null, $request->input('lastname'))) {
+            return back()
+                ->withInput()
+                ->withErrors('There has been a problem with saving the name.');
+        }
+
+        $contact->gender_id = $request->input('gender');
 
         if ($request->file('avatar') != '') {
             $contact->has_avatar = true;
@@ -186,24 +266,41 @@ class ContactsController extends Controller
                 $specialDate = $contact->setSpecialDate('deceased_date', $request->input('deceased_date_year'), $request->input('deceased_date_month'), $request->input('deceased_date_day'));
 
                 if ($request->input('addReminderDeceased') != '') {
-                    $newReminder = $specialDate->setReminder('year', 1, trans('people.deceased_reminder_title', ['name' => $contact->first_name]));
+                    $specialDate->setReminder('year', 1, trans('people.deceased_reminder_title', ['name' => $contact->first_name]));
                 }
             }
         }
 
         $contact->save();
 
-        // Saves birthdate if defined
+        // Handling the case of the birthday
         $contact->removeSpecialDate('birthdate');
         switch ($request->input('birthdate')) {
-            case 'unknown':
-                break;
             case 'approximate':
                 $specialDate = $contact->setSpecialDateFromAge('birthdate', $request->input('age'));
                 break;
+            case 'almost':
+                $specialDate = $contact->setSpecialDate(
+                    'birthdate',
+                    0,
+                    $request->input('month'),
+                    $request->input('day')
+                );
+                $specialDate->setReminder('year', 1, trans('people.people_add_birthday_reminder', ['name' => $contact->first_name]));
+                break;
             case 'exact':
-                $specialDate = $contact->setSpecialDate('birthdate', $request->input('birthdate_year'), $request->input('birthdate_month'), $request->input('birthdate_day'));
-                $newReminder = $specialDate->setReminder('year', 1, trans('people.people_add_birthday_reminder', ['name' => $contact->first_name]));
+                $birthdate = $request->input('birthdayDate');
+                $birthdate = new \Carbon\Carbon($birthdate);
+                $specialDate = $contact->setSpecialDate(
+                    'birthdate',
+                    $birthdate->year,
+                    $birthdate->month,
+                    $birthdate->day
+                );
+                $specialDate->setReminder('year', 1, trans('people.people_add_birthday_reminder', ['name' => $contact->first_name]));
+                break;
+            case 'unknown':
+            default:
                 break;
         }
 
@@ -211,19 +308,7 @@ class ContactsController extends Controller
 
         dispatch(new ResizeAvatars($contact));
 
-        // for performance reasons, we check if a gravatar exists for this email
-        // address. if it does, we store the gravatar url in the database.
-        // while this is not ideal because the gravatar can change, at least we
-        // won't make constant call to gravatar to load the avatar on every
-        // page load.
-        $response = $contact->getGravatar(250);
-        if ($response != false and is_string($response)) {
-            $contact->gravatar_url = $response;
-            $contact->save();
-        } else {
-            $contact->gravatar_url = null;
-            $contact->save();
-        }
+        $contact->updateGravatar();
 
         return redirect('/people/'.$contact->id)
             ->with('success', trans('people.information_edit_success'));
@@ -242,22 +327,15 @@ class ContactsController extends Controller
         // this because I'll add more objects related to contacts in the future
         // and I don't want to have to think of deleting a row that matches a
         // contact.
+        //
         $tables = DB::select('SELECT table_name FROM information_schema.tables WHERE table_schema="monica"');
         foreach ($tables as $table) {
             $tableName = $table->table_name;
-            $tableData = DB::table($tableName)->get();
 
-            $contactIdRowExists = false;
-            foreach ($tableData as $data) {
-                foreach ($data as $columnName => $value) {
-                    if ($columnName == 'contact_id') {
-                        $contactIdRowExists = true;
-                    }
-                }
-            }
-
-            if ($contactIdRowExists == true) {
+            try {
                 DB::table($tableName)->where('contact_id', $contact->id)->delete();
+            } catch (QueryException $e) {
+                continue;
             }
         }
 
@@ -354,11 +432,44 @@ class ContactsController extends Controller
             return;
         }
 
-        $results = Contact::search($needle, $accountId);
+        if (preg_match('/(.{1,})[:](.{1,})/', $needle, $matches)) {
+            $search_field = $matches[1];
+            $search_term = $matches[2];
+
+            $field = ContactFieldType::where('name', 'LIKE', $search_field)->first();
+
+            $field_id = $field->id;
+
+            $results = Contact::whereHas('contactFields', function ($query) use ($field_id,$search_term) {
+                $query->where([
+                    ['data', 'like', "$search_term%"],
+                    ['contact_field_type_id', $field_id],
+                ]);
+            })->get();
+        } else {
+            $results = Contact::search($needle, $accountId, 20, 'created_at');
+        }
+
         if (count($results) !== 0) {
             return $results;
         } else {
             return ['noResults' => trans('people.people_search_no_results')];
         }
+    }
+
+    /**
+     * Download the contact as vCard.
+     * @param  Contact $contact
+     * @return
+     */
+    public function vCard(Contact $contact)
+    {
+        if (config('app.debug')) {
+            \Barryvdh\Debugbar\Facade::disable();
+        }
+
+        $vcard = VCardHelper::prepareVCard($contact);
+
+        return  $vcard->download();
     }
 }

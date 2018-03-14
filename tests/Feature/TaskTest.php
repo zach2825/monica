@@ -4,12 +4,12 @@ namespace Tests\Feature;
 
 use App\Contact;
 use Tests\FeatureTestCase;
-use Faker\Factory as Faker;
+use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 class TaskTest extends FeatureTestCase
 {
-    use DatabaseTransactions;
+    use DatabaseTransactions, WithFaker;
 
     /**
      * Returns an array containing a user object along with
@@ -31,9 +31,8 @@ class TaskTest extends FeatureTestCase
     {
         list($user, $contact) = $this->fetchUser();
 
-        $faker = Faker::create();
-        $taskTitle = $faker->realText();
-        $taskDescription = $faker->realText();
+        $taskTitle = $this->faker->realText();
+        $taskDescription = $this->faker->realText();
 
         $params = [
             'title' => $taskTitle,
@@ -57,11 +56,5 @@ class TaskTest extends FeatureTestCase
         $eventParams['object_type'] = 'task';
         $eventParams['nature_of_operation'] = 'create';
         $this->assertDatabaseHas('events', $eventParams);
-
-        // Visit the dashboard and checks that the note event appears on the
-        // dashboard
-        $response = $this->get('/dashboard');
-        $response->assertSee('added a task');
-        $response->assertSee('<a href="/people/'.$contact->id);
     }
 }

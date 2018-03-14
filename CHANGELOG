@@ -1,8 +1,100 @@
 UNRELEASED CHANGES:
 
-* Add ability to change account's password in the settings
+* Redirect to registration page if there is no account
+* Improve heroku integration
+* Add bullet points to lists in call log
 
 RELEASED VERSIONS:
+
+v1.8.1 - 2018-03-02
+-------------------
+
+* Fix message in contact edit page
+* Fix months list for non english languages  in contact edit page
+* Fix birthdate calendar for non english languages in contact edit page
+* Fix Gravatar support
+* Remove partial contacts from search results returned by the API
+* Fix reset account deleting default account values
+* Fix notifications not working with aysnchronous queue
+* Support mysql unix socket
+
+v1.8.0 - 2018-02-26
+-------------------
+
+* Add ability to search and sort in the API
+* Add ability to define the hour the reminder should be sent
+* Add notifications for reminders (30 and 7 days before an event happens)
+* Add API calls to associate and remove tags to a contact
+* Docker image: use cron to run schedule tasks
+* Docker image: reduce size of image
+* Docker image: create storage subdirectory in case they not exist
+* Docker image: use rewrite rules in .htaccess from public directory instead of apache conf file
+* Remove trailing slash from routes
+
+v1.7.2 - 2018-02-20
+-------------------
+
+* Fix a bug where POST requests were not working with Apache
+* Fix a bug preventing to delete a contact
+
+v1.7.1 - 2018-02-17
+-------------------
+
+* Fix a bug that occured when running setup:production command
+
+v1.7.0 - 2018-02-16
+-------------------
+
+* Add ability to create custom genders
+* Add Annual plan for the .com site
+* Fix avatar being invalid in the Contact API call
+* DB_PREFIX is now blank in .env.example
+* Fix empty message after updating a gift
+
+v1.6.2 - 2018-01-25
+-------------------
+
+* Add support for pets in the API
+* Add ability to export a contact to vCard
+* Add ability to mark a gift idea as being offered
+* Add translation for "preferences updated" message in the Settings page
+* Add a lot of unit tests
+
+v1.6.1 - 2018-01-14
+-------------------
+
+* Add missing journal link to the mobile main menu
+* Remove list of events being loaded in the dashboard for no reason
+* Remove duplicated code in Addresses.vue file
+* Fix reminders not being sent in some cases
+* Fix avatars not being displayed in an activity on the journal
+* Fix filtering of contacts by tags not taking into account the selected tag from the profile page
+
+v1.6.0 - 2018-01-09
+-------------------
+
+* Change the structure of the dashboard
+* Add two factor authentication ability
+* Add ability to edit a reminder
+* Fix vCard import if custom field types are not present
+* Fetch Countries in alphabetical order in "Add Address" form in People Profile page
+* Display missing page when loading a contact that does not exist
+* Add ability to filter contacts by more than one tag
+* Change the structure of the dashboard
+* Add two factor authentication ability
+* Add pet support to API
+
+v1.5.0 - 2018-01-02
+-------------------
+
+* Add Webmanifest to create bookmarks on phones
+* Add pets management
+* Activities made with contact now appears in the Journal
+* Add ability to rate how a day went in the Journal
+* Add validation when changing email address
+* Add ability to change account's password in the settings
+* Show a user's avatar when searching
+* Fix timezone not being saved in the Settings tab
 
 v1.4.1 - 2017-12-13
 -------------------

@@ -10,6 +10,11 @@ Route::group(['middleware' => ['auth:api', 'throttle:60,1']], function () {
       'create', 'edit', 'patch',
     ]]);
 
+    // Sets tags
+    Route::post('/contacts/{contact}/setTags', 'Api\\ApiContactTagController@setTags');
+    Route::get('/contacts/{contact}/unsetTags', 'Api\\ApiContactTagController@unsetTags');
+    Route::post('/contacts/{contact}/unsetTag', 'Api\\ApiContactTagController@unsetTag');
+
     // Set a partner to the contact
     Route::post('/contacts/{contact}/partners', 'Api\\ApiContactController@partners');
     Route::post('/contacts/{contact}/partners/unset', 'Api\\ApiContactController@unsetPartners');
@@ -29,6 +34,14 @@ Route::group(['middleware' => ['auth:api', 'throttle:60,1']], function () {
       'create', 'edit', 'patch',
     ]]);
     Route::get('/contacts/{contact}/contactfields', 'Api\\ApiContactFieldController@contactFields');
+
+    // Pets
+    Route::resource('pets', 'Api\\ApiPetController');
+
+    // Contact Pets
+    Route::get('/contacts/{contact}/pets', 'Api\\ApiPetController@listContactPets');
+    Route::post('/contacts/{contact}/pets', 'Api\\ApiPetController@storeContactPet');
+    Route::put('/contacts/{contact}/pets/{pet}', 'Api\\ApiPetController@moveContactPet');
 
     // Tags
     Route::resource('tags', 'Api\\ApiTagController', ['except' => [

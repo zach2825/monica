@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use Auth;
+use App\User;
 use Illuminate\Support\Str;
 use UnexpectedValueException;
 use App\Http\Requests\Request;
@@ -17,7 +18,7 @@ class PasswordChangeController extends Controller
 {
     use RedirectsUsers;
 
-    protected $redirectTo = '/settings';
+    protected $redirectTo = '/settings/security';
 
     /**
      * Get usefull parameters from request.

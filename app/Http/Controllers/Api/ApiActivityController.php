@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Note;
 use Validator;
 use App\Contact;
 use App\Activity;
 use App\ActivityType;
+use App\JournalEntry;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -93,6 +95,9 @@ class ApiActivityController extends ApiController
             return $this->respondNotTheRightParameters();
         }
 
+        // Log a journal entry
+        (new JournalEntry)->add($activity);
+
         // Now we associate the activity with each one of the attendees
         $attendeesID = $request->get('contacts');
         foreach ($attendeesID as $attendeeID) {
@@ -162,6 +167,10 @@ class ApiActivityController extends ApiController
             return $this->respondNotTheRightParameters();
         }
 
+        // Log a journal entry but need to delete the previous one first
+        $activity->deleteJournalEntry();
+        (new JournalEntry)->add($activity);
+
         // Get the attendees
         $attendees = $request->get('contacts');
 
@@ -211,6 +220,8 @@ class ApiActivityController extends ApiController
         } catch (ModelNotFoundException $e) {
             return $this->respondNotFound();
         }
+
+        $activity->deleteJournalEntry();
 
         $activity->delete();
 

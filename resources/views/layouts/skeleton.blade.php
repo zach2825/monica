@@ -6,31 +6,18 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
     <title>@yield('title', 'Monica - a CRM for your friends and family')</title>
+    <link rel="manifest" href="/manifest.webmanifest">
 
     <link rel="stylesheet" href="{{ mix('css/app.css') }}">
     <link rel="shortcut icon" href="/img/favicon.png">
     <script>
       window.Laravel = <?php echo json_encode([
           'csrfToken' => csrf_token(),
+          'locale' => (Auth::check() ? auth()->user()->locale : 'en')
       ]); ?>
     </script>
-
-    <!-- The script below puts all the translation keys in a JS file so we
-    can reuse it in Vue.js files -->
-    <script>
-      window.trans = <?php
-      // copy all translations from /resources/lang/CURRENT_LOCALE/* to global JS variable
-      $lang_files = File::files(resource_path() . '/lang/' . App::getLocale());
-      $trans = [];
-      foreach ($lang_files as $f) {
-          $filename = pathinfo($f)['filename'];
-          $trans[$filename] = trans($filename);
-      }
-      echo json_encode($trans);
-      ?>;
-    </script>
   </head>
-  <body data-account-id={{ auth()->user()->account_id }}>
+  <body data-account-id={{ auth()->user()->account_id }} class="bg-gray-monica">
 
     @include('partials.header')
 
@@ -44,6 +31,16 @@
     {{-- Load everywhere except on the Upgrade account page --}}
     @if (Route::currentRouteName() != 'settings.subscriptions.upgrade')
       <script src="{{ mix('js/app.js') }}"></script>
+    @endif
+
+    {{-- Required only for the Upgrade account page --}}
+    @if (Route::currentRouteName() == 'settings.subscriptions.upgrade')
+      <script src="https://js.stripe.com/v3/"></script>
+      <script>
+        var stripe = Stripe('{{config('services.stripe.key')}}');
+      </script>
+      <script src="{{ mix('js/stripe.js') }}"></script>
+      <link rel="stylesheet" href="{{ mix('css/stripe.css') }}">
     @endif
 
     {{-- TRACKING SHIT --}}
